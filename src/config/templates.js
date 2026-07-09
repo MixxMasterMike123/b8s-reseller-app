@@ -24,6 +24,8 @@ export const NORD_TEMPLATE = {
   id: 'nord',
   name: 'NORD',
   tagline: 'Varm, redaktionell, tidlös — standardtemat.',
+  // Thumbnail for the admin template picker (public/ asset, 640×400 @2x).
+  thumb: '/template-thumbs/nord.png',
   // Empty: resolveTheme({}) yields the NORD defaults.
   tokens: {},
 };
@@ -44,6 +46,7 @@ export const SPORT_TEMPLATE = {
   id: 'sport',
   name: 'Sport',
   tagline: 'Snabb, energisk, lagkänsla — för klubbar och föreningar.',
+  thumb: '/template-thumbs/sport.png',
   tokens: {
     colors: {
       accent: '#E8112D',    // energetic team red — AA as button bg w/ white text

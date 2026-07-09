@@ -15,6 +15,7 @@ import { useShopId } from '../../contexts/ShopContext';
 import { loadShopConfig, saveShopConfig } from '../../config/shopConfig';
 import { uploadStoreImage } from '../../utils/imageUpload';
 import { evaluateAccentContrast } from '../../utils/colorContrast';
+import { TEMPLATES } from '../../config/templates';
 import { Page, Card, CardSection, RightRail, Button } from '../../components/admin/ui';
 import { FRONTPAGE_FEATURED } from '../../utils/productSorting';
 import {
@@ -32,6 +33,7 @@ import {
 // present in the patch — so listing pickupLocations here would wipe a shop's
 // pickup locations + their dates whenever this page is saved. Settings owns it.
 const BRANDING_KEYS = [
+  'templateId',
   'accent',
   'logoUrl',
   'faviconUrl',
@@ -267,6 +269,53 @@ const AdminStorefront = () => {
         <RightRail
           main={
             <>
+              {/* Template picker — choose the storefront's overall look. Each
+                  template is a token preset (see src/config/templates.js); the
+                  thumbnail gives a feel before selecting. Accent/logo/hero below
+                  still apply on top of the chosen template. */}
+              <CardSection title="Mall">
+                <p className="text-[13px] text-admin-text-muted mb-4">
+                  Välj butikens grundutseende. Din accentfärg och dina bilder läggs ovanpå.
+                </p>
+                <div className="grid gap-4 sm:grid-cols-2">
+                  {TEMPLATES.map((tpl) => {
+                    const selected = (form.templateId || 'nord') === tpl.id;
+                    return (
+                      <button
+                        key={tpl.id}
+                        type="button"
+                        onClick={() => setField('templateId', tpl.id)}
+                        aria-pressed={selected}
+                        className={
+                          'group text-left rounded-admin overflow-hidden border transition-all ' +
+                          (selected
+                            ? 'border-admin-primary ring-2 ring-admin-primary'
+                            : 'border-admin-border hover:border-admin-text-faint')
+                        }
+                      >
+                        <div className="relative aspect-[16/10] bg-admin-surface-2 overflow-hidden">
+                          <img
+                            src={tpl.thumb}
+                            alt={`Förhandsvisning av mallen ${tpl.name}`}
+                            className="w-full h-full object-cover object-top"
+                            loading="lazy"
+                          />
+                          {selected && (
+                            <span className="absolute top-2 right-2 inline-flex items-center gap-1 rounded-full bg-admin-primary px-2 py-0.5 text-[11px] font-semibold text-white">
+                              Vald
+                            </span>
+                          )}
+                        </div>
+                        <div className="p-3">
+                          <div className="text-[13px] font-semibold text-admin-text">{tpl.name}</div>
+                          <div className="text-[12px] text-admin-text-muted mt-0.5">{tpl.tagline}</div>
+                        </div>
+                      </button>
+                    );
+                  })}
+                </div>
+              </CardSection>
+
               {/* Brand: accent + logo + hero image */}
               <CardSection title="Varumärke" bodyClassName="space-y-5">
                 {/* Accent */}
