@@ -36,6 +36,12 @@ import {
 const BRANDING_KEYS = [
   'templateId',
   'accent',
+  // Template-tuning overrides live under `theme` (theme.layout.{gridStyle,
+  // cardStyle,heroStyle}, theme.colors.accent, …), set by the "Mallar" editor
+  // (AdminTemplates). Listed here so this page preserves them on save instead
+  // of dropping them from the merged patch. StoreSettingsContext already reads
+  // settings.theme as the inline override layer over the chosen template.
+  'theme',
   'logoUrl',
   'faviconUrl',
   'heroImageUrl',

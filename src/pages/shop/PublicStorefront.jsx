@@ -710,10 +710,13 @@ const PublicStorefront = () => {
           ) : (
             <>
               {/* One product = one card (v2: variants are embedded on the
-                  product; selection happens on the product page). Grid columns
-                  follow the active template (store.__gridClass). */}
-              <div className={store.__gridClass}>
-                {displayCards.map((product) => {
+                  product; selection happens on the product page). Grid LAYOUT
+                  follows the active template/shop (store.__grid): container class
+                  + a per-card cellClass so mosaic/offset/runway can vary the
+                  grid shape, not just the column count. Uniform grids return an
+                  empty cellClass, so the wrapper is a plain pass-through div. */}
+              <div className={(store.__grid?.container) || store.__gridClass}>
+                {displayCards.map((product, i) => {
                   // 🚨 CRITICAL: never render an object — prevent React Error #31
                   const productName = getContentValue(product.name);
                   const name = typeof productName === 'string' && productName
@@ -723,21 +726,23 @@ const PublicStorefront = () => {
                   const descRaw = getB2cProductDescription(product);
                   const description = typeof descRaw === 'string' ? descRaw : '';
                   const { price, isFrom, compareAt } = getCardPrice(product);
+                  const cellClass = store.__grid?.cellClass ? store.__grid.cellClass(i) : '';
 
                   return (
-                    <NordProductCard
-                      key={product.id}
-                      to={getProductUrl(product)}
-                      image={getB2cProductImage(product)}
-                      imageAlt={name}
-                      name={name}
-                      description={description}
-                      priceSek={price}
-                      compareSek={compareAt}
-                      isFromPrice={isFrom}
-                      product={product}
-                      ctaLabel={t('product_choose_button', 'Välj')}
-                    />
+                    <div key={product.id} className={cellClass}>
+                      <NordProductCard
+                        to={getProductUrl(product)}
+                        image={getB2cProductImage(product)}
+                        imageAlt={name}
+                        name={name}
+                        description={description}
+                        priceSek={price}
+                        compareSek={compareAt}
+                        isFromPrice={isFrom}
+                        product={product}
+                        ctaLabel={t('product_choose_button', 'Välj')}
+                      />
+                    </div>
                   );
                 })}
               </div>

@@ -30,6 +30,7 @@ import {
   SparklesIcon,
   DocumentTextIcon,
   BuildingStorefrontIcon,
+  SwatchIcon,
   TagIcon,
   StarIcon,
   RectangleStackIcon,
@@ -157,6 +158,12 @@ const AppLayout = ({ children }) => {
       path: '/admin/storefront',
       icon: BuildingStorefrontIcon,
       description: t('nav.admin_storefront_desc', 'Utseende och innehåll för din webbutik'),
+    },
+    {
+      name: t('nav.admin_templates', 'Mallar'),
+      path: '/admin/templates',
+      icon: SwatchIcon,
+      description: t('nav.admin_templates_desc', 'Välj mall och finjustera rutnät, kort och hero'),
     },
     {
       name: t('nav.admin_marketing', 'Marknadsföring'),

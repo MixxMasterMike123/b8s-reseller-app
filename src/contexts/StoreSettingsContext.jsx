@@ -2,7 +2,7 @@ import React, { createContext, useContext, useState, useEffect, useMemo } from '
 import { STORE } from '../config/store';
 import { loadShopConfig } from '../config/shopConfig';
 import { useShopId } from './ShopContext';
-import { resolveTheme, ensureTemplateFonts, nordGridClass } from '../config/nordTokens';
+import { resolveTheme, ensureTemplateFonts, nordGridClass, nordGridLayout } from '../config/nordTokens';
 import { getTemplate } from '../config/templates';
 
 /**
@@ -154,8 +154,12 @@ export function StoreSettingsProvider({ children }) {
       ...settings,
       __heroStyle: resolved.heroStyle,
       __cardStyle: resolved.cardStyle,
-      // Full static Tailwind grid class for the template's column count. The
-      // storefront product grids use this instead of a hardcoded lg:grid-cols-4.
+      __gridStyle: resolved.gridStyle,
+      // Resolved grid layout for the template/shop's gridStyle: { container,
+      // cellClass(i) }. The product grid uses these so mosaic/offset/runway
+      // (not just column count) can vary per template. __gridClass kept as the
+      // back-compat container-only string for any legacy consumer.
+      __grid: nordGridLayout(resolved.gridStyle),
       __gridClass: nordGridClass(resolved.gridCols),
     }),
     [settings, resolved]

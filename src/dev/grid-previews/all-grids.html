@@ -1,0 +1,167 @@
+<!doctype html>
+<html lang="sv">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Grid layouts — Molten tokens</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet" />
+<style>
+  :root {
+    --color-accent:#E01F26;--color-accent-ink:#FFFFFF;--color-canvas:#0B0B0D;
+    --color-surface:#17171B;--color-ink:#F3F3F5;--color-ink-muted:#98999F;
+    --color-ink-faint:#5E5F66;--color-line:#FFFFFF12;
+    --font-display:'Oswald', ui-sans-serif, system-ui, sans-serif;
+    --font-body:'Inter', -apple-system, ui-sans-serif, system-ui, sans-serif;
+    --radius-tile:10px;--radius-el:8px;
+    --ease:cubic-bezier(0.16, 0.84, 0.44, 1);
+  }
+  * { box-sizing: border-box; margin: 0; }
+  body {
+    background: var(--color-canvas); font-family: var(--font-body);
+    color: var(--color-ink); padding: 40px 48px 96px; max-width: 1320px; margin: 0 auto;
+  }
+  .page-title { font-family: var(--font-display); font-size: 30px; font-weight: 700; letter-spacing: -0.01em; }
+  .page-sub { color: var(--color-ink-muted); margin: 8px 0 4px; font-size: 15px; }
+
+  .section { margin-top: 56px; }
+  .sec-head { display: flex; align-items: baseline; gap: 14px; margin-bottom: 18px; padding-bottom: 12px; border-bottom: 1px solid var(--color-line); }
+  .sec-id { font-family: var(--font-display); font-size: 13px; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; color: var(--color-accent); }
+  .sec-name { font-family: var(--font-display); font-size: 22px; font-weight: 600; }
+  .sec-desc { color: var(--color-ink-muted); font-size: 14px; margin-left: auto; max-width: 46ch; text-align: right; }
+
+  /* ── Overlay product card (mirrors NordProductCard overlay variant) ── */
+  .card { position: relative; border-radius: var(--radius-tile); overflow: hidden; display: block; height: 100%; min-height: 0; }
+  .card .img { position: absolute; inset: 0; }
+  .card .scrim { position: absolute; inset: 0; background: linear-gradient(to top, rgba(0,0,0,.78) 0%, rgba(0,0,0,.2) 45%, transparent 72%); }
+  .card .body { position: absolute; inset-inline: 0; bottom: 0; padding: 16px; color: #fff; }
+  .card .nm { font-family: var(--font-display); font-weight: 700; font-size: 18px; line-height: 1.15; letter-spacing: -0.01em; }
+  .card .cat { font-size: 10px; font-weight: 700; letter-spacing: 0.13em; text-transform: uppercase; color: rgba(255,255,255,.7); margin-bottom: 4px; }
+  .card .row { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-top: 8px; }
+  .card .pr { font-family: var(--font-display); font-size: 16px; font-weight: 600; }
+  .card .cta { background: var(--color-accent); color: var(--color-accent-ink); font-size: 13px; font-weight: 700; padding: 7px 14px; border-radius: 999px; white-space: nowrap; }
+  .card .tag { position: absolute; top: 12px; left: 12px; background: rgba(0,0,0,.55); backdrop-filter: blur(4px); color: #fff; font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; padding: 5px 10px; border-radius: 999px; }
+
+  /* distinct dark "photo" fields so uneven layouts read clearly */
+  .p1 { background: radial-gradient(120% 90% at 30% 10%, #3a1518, #120a0c 70%); }
+  .p2 { background: radial-gradient(120% 90% at 70% 20%, #1a2230, #0b0e14 70%); }
+  .p3 { background: radial-gradient(120% 90% at 40% 80%, #2b2320, #100d0c 70%); }
+  .p4 { background: radial-gradient(120% 90% at 60% 30%, #241a2c, #0d0a10 70%); }
+  .p5 { background: radial-gradient(120% 90% at 20% 60%, #142622, #080f0d 70%); }
+  .p6 { background: radial-gradient(120% 90% at 80% 70%, #301a1a, #120909 70%); }
+  .p7 { background: radial-gradient(120% 90% at 50% 20%, #202430, #0a0c11 70%); }
+  .p8 { background: radial-gradient(120% 90% at 30% 50%, #2c2418, #100d08 70%); }
+
+  /* Default cell aspect for uniform grids */
+  .aspect { aspect-ratio: 3 / 4; }
+
+  /* 1. grid-3 */
+  .g-grid3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px; }
+  /* 2. grid-4 */
+  .g-grid4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 18px; }
+  /* 3. grid-5 */
+  .g-grid5 { display: grid; grid-template-columns: repeat(5, 1fr); gap: 14px; }
+  /* 4. mosaic — mixed spans on a 4-col base; first + fifth cards go big */
+  .g-mosaic { display: grid; grid-template-columns: repeat(4, 1fr); grid-auto-rows: 200px; gap: 16px; }
+  .g-mosaic .card { grid-column: span 1; grid-row: span 1; }
+  .g-mosaic .big { grid-column: span 2; grid-row: span 2; }
+  .g-mosaic .wide { grid-column: span 2; grid-row: span 1; }
+  /* 5. masonry — staggered heights via CSS columns */
+  .g-masonry { column-count: 4; column-gap: 16px; }
+  .g-masonry .card { break-inside: avoid; margin-bottom: 16px; display: block; position: relative; }
+  .g-masonry .card .m-img { display: block; width: 100%; border-radius: var(--radius-tile); }
+  .m-h1 { height: 230px; } .m-h2 { height: 320px; } .m-h3 { height: 270px; } .m-h4 { height: 380px; }
+  /* 6. offset — brick bond: even rows indented half a cell */
+  .g-offset { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; }
+  .g-offset .card:nth-child(4n+1) { transform: translateY(28px); }
+  .g-offset .card:nth-child(4n+3) { transform: translateY(28px); }
+  /* 7. runway — horizontal scroll row */
+  .g-runway { display: flex; gap: 16px; overflow-x: auto; padding-bottom: 12px; scroll-snap-type: x mandatory; }
+  .g-runway .card { flex: 0 0 260px; scroll-snap-align: start; }
+  .g-runway::-webkit-scrollbar { height: 8px; }
+  .g-runway::-webkit-scrollbar-thumb { background: var(--color-line); border-radius: 999px; }
+  .runway-hint { font-size: 12px; color: var(--color-ink-faint); margin-top: 6px; }
+</style>
+</head>
+<body>
+  <div class="page-title">Grid-layouts — sett med Molten-mallens tokens</div>
+  <div class="page-sub">Samma overlay-kort, sju olika rutnät. Detta är hela poängen: rutnätet, inte färgen, gör att mallar slutar se likadana ut.</div>
+
+  <!-- 1 -->
+  <section class="section">
+    <div class="sec-head"><span class="sec-id">grid-3</span><span class="sec-name">Tre kolumner</span><span class="sec-desc">Rymligt, redaktionellt. Större kort, färre per rad.</span></div>
+    <div class="g-grid3" id="grid3"></div>
+  </section>
+
+  <!-- 2 -->
+  <section class="section">
+    <div class="sec-head"><span class="sec-id">grid-4</span><span class="sec-name">Fyra kolumner</span><span class="sec-desc">Standard. Tätare, mer katalog-känsla.</span></div>
+    <div class="g-grid4" id="grid4"></div>
+  </section>
+
+  <!-- 3 -->
+  <section class="section">
+    <div class="sec-head"><span class="sec-id">grid-5</span><span class="sec-name">Fem kolumner</span><span class="sec-desc">Riktigt tätt. Många plagg på en skärm — sneaker-vägg.</span></div>
+    <div class="g-grid5" id="grid5"></div>
+  </section>
+
+  <!-- 4 -->
+  <section class="section">
+    <div class="sec-head"><span class="sec-id">mosaic</span><span class="sec-name">Mosaik</span><span class="sec-desc">Blandade storlekar — ett hjälte-plagg dominerar, resten fyller runt. Bryter monotonin helt.</span></div>
+    <div class="g-mosaic" id="mosaic"></div>
+  </section>
+
+  <!-- 5 -->
+  <section class="section">
+    <div class="sec-head"><span class="sec-id">masonry</span><span class="sec-name">Masonry</span><span class="sec-desc">Förskjutna höjder, Pinterest-stil. Ser aldrig ut som ett vanligt rutnät.</span></div>
+    <div class="g-masonry" id="masonry"></div>
+  </section>
+
+  <!-- 6 -->
+  <section class="section">
+    <div class="sec-head"><span class="sec-id">offset</span><span class="sec-name">Förskjutet (tegel)</span><span class="sec-desc">Varannan kolumn nedskjuten — tegelförband. Subtilt men tydligt annorlunda.</span></div>
+    <div class="g-offset" id="offset"></div>
+  </section>
+
+  <!-- 7 -->
+  <section class="section">
+    <div class="sec-head"><span class="sec-id">runway</span><span class="sec-name">Runway (horisontell)</span><span class="sec-desc">Ingen wrap — en scrollande rad, lookbook/catwalk. Maximalt "inte ett rutnät".</span></div>
+    <div class="g-runway" id="runway"></div>
+    <div class="runway-hint">← scrolla i sidled →</div>
+  </section>
+
+<script>
+  const PRODUCTS = [
+    { n: 'Sirenhoodie', c: 'Huvtröja', pr: '999 kr', img: 'p1', tag: 'Nytt' },
+    { n: 'Utgång Tee', c: 'T-shirt', pr: '449 kr', img: 'p2' },
+    { n: 'Skiftbyxa', c: 'Byxor', pr: '1399 kr', img: 'p3' },
+    { n: 'Vaktkeps', c: 'Keps', pr: '649 kr', img: 'p4', tag: 'Få kvar' },
+    { n: 'Nattskift Jacka', c: 'Jacka', pr: '1899 kr', img: 'p5' },
+    { n: 'Betong Beanie', c: 'Mössa', pr: '399 kr', img: 'p6' },
+    { n: 'Sodium Longsleeve', c: 'Överdel', pr: '799 kr', img: 'p7', tag: 'Nytt' },
+    { n: 'Exit Shorts', c: 'Shorts', pr: '599 kr', img: 'p8' },
+  ];
+  function cardHTML(p, extraClass = '', imgTag = false, mh = '') {
+    const tag = p.tag ? `<span class="tag">${p.tag}</span>` : '';
+    if (imgTag) {
+      // masonry uses a block image so the card height varies
+      return `<a class="card ${extraClass}"><span class="img m-img ${p.img} ${mh}"></span><span class="scrim"></span>${tag}<span class="body"><span class="cat">${p.c}</span><span class="nm">${p.n}</span><span class="row"><span class="pr">${p.pr}</span><span class="cta">Köp</span></span></span></a>`;
+    }
+    return `<a class="card aspect ${extraClass}"><span class="img ${p.img}"></span><span class="scrim"></span>${tag}<span class="body"><span class="cat">${p.c}</span><span class="nm">${p.n}</span><span class="row"><span class="pr">${p.pr}</span><span class="cta">Köp</span></span></span></a>`;
+  }
+  const fill = (id, n, fn) => { document.getElementById(id).innerHTML = Array.from({length:n}, (_,i)=>fn(PRODUCTS[i%PRODUCTS.length], i)).join(''); };
+
+  fill('grid3', 6, p => cardHTML(p));
+  fill('grid4', 8, p => cardHTML(p));
+  fill('grid5', 10, p => cardHTML(p));
+  // mosaic: card 0 big, card 4 wide, rest normal
+  fill('mosaic', 8, (p,i) => cardHTML(p, i===0 ? 'big' : i===5 ? 'wide' : ''));
+  // masonry: varied heights
+  const mh = ['m-h2','m-h1','m-h4','m-h3','m-h1','m-h3','m-h2','m-h4','m-h3','m-h1','m-h4','m-h2'];
+  fill('masonry', 12, (p,i) => cardHTML(p, '', true, mh[i%mh.length]));
+  fill('offset', 8, p => cardHTML(p));
+  fill('runway', 8, p => cardHTML(p));
+</script>
+</body>
+</html>

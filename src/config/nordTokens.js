@@ -76,9 +76,23 @@ export const NORD_TOKENS = {
   // recolored. Constrained to enum-like sets so a generated template can only
   // pick sane values. These drive utilities/CSS added in index.css.
   layout: {
-    // Product grid columns at desktop. Storefront grids read
-    // `--nord-grid-cols`; mobile/tablet steps are fixed in CSS.
+    // Product grid columns at desktop (LEGACY axis, back-compat). Storefront
+    // grids read `--nord-grid-cols`; mobile/tablet steps are fixed in CSS.
+    // Superseded by `gridStyle` below — kept so pre-gridStyle templates/shops
+    // still resolve. When a template/shop sets only gridCols, resolveTheme maps
+    // it to the matching gridStyle ('grid-3'/'grid-4'); gridStyle wins if both.
     gridCols: 4,                // 3 | 4
+    // Product GRID layout — the highest-impact structural differentiator after
+    // cardStyle. Not just a column count: mosaic/offset/runway change the grid's
+    // SHAPE so two templates stop looking like the same page recolored. Each
+    // value maps to a complete, pre-authored layout recipe (nordGridLayout) —
+    // it can't be a free integer because Tailwind purges dynamically-built
+    // classes. 'grid-4' equals the legacy 4-col default (no-op).
+    //   'grid-3'/'grid-4'/'grid-5' — uniform N-col grids (3/4/5 at desktop).
+    //   'mosaic'  — mixed cell spans; a hero product dominates. Editorial.
+    //   'offset'  — brick-bond; alternating columns nudged down. Subtle-distinct.
+    //   'runway'  — one horizontal-scroll row, no wrap. Lookbook/catwalk.
+    gridStyle: 'grid-4',        // 'grid-3'|'grid-4'|'grid-5'|'mosaic'|'offset'|'runway'
     // Global spacing rhythm. Scales the section padding/gap custom props.
     density: 'cozy',            // 'compact' | 'cozy' | 'airy'
     // Homepage hero treatment. 'bento' is the signature NORD layout; the
@@ -104,6 +118,7 @@ export const NORD_TOKENS = {
  */
 export const TOKEN_ENUMS = {
   'layout.gridCols': [3, 4],
+  'layout.gridStyle': ['grid-3', 'grid-4', 'grid-5', 'mosaic', 'offset', 'runway'],
   'layout.density': ['compact', 'cozy', 'airy'],
   'layout.heroStyle': ['bento', 'full', 'split', 'editorial'],
   'layout.cardStyle': ['elevated', 'flat', 'bordered', 'overlay'],
@@ -139,20 +154,65 @@ export const TOKEN_CSS_VAR = {
 };
 
 /**
- * Static Tailwind grid class for a template's desktop column count. Returns a
- * COMPLETE class string (no dynamic construction) so Tailwind's scanner keeps
- * these utilities in the build. Mobile (1) + tablet (2) steps are fixed for
- * readability; only the `lg:` desktop count varies with the template.
- * Falls back to 4 for anything unexpected.
+ * Grid LAYOUT descriptor for a template's `gridStyle`. Returns
+ *   { container: '<complete class string>', cellClass: (index) => '<class>' }
+ * where `container` is the grid wrapper class and `cellClass(i)` gives the
+ * per-card span/size class for card `i` (empty string for uniform grids).
+ *
+ * Every class is a COMPLETE literal string (no dynamic `lg:grid-cols-${n}`
+ * construction) so Tailwind's scanner keeps the utilities in the build — the
+ * reason gridStyle is an enum of recipes, not a free integer. Mobile (1) +
+ * tablet (2) steps are fixed for readability; the desktop layout varies.
+ *
+ * The non-uniform styles (mosaic/offset/runway) lean on a few static utilities
+ * defined in index.css (§nord-grid) so they survive the build too.
+ *
+ * Falls back to the uniform 4-col grid for anything unexpected.
+ */
+export function nordGridLayout(gridStyle) {
+  const NONE = () => '';
+  switch (gridStyle) {
+    case 'grid-3':
+      return { container: 'grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 items-stretch', cellClass: NONE };
+    case 'grid-5':
+      return { container: 'grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 items-stretch', cellClass: NONE };
+    case 'mosaic':
+      // 4-col base; the first card spans 2 columns (a wide "hero product"), the
+      // rest are single. NO fixed row height — cards keep their own 3:4 aspect,
+      // so the wide card is simply proportionally larger. Reads as an editorial
+      // mosaic without fighting the overlay card's aspect ratio. `items-start`
+      // so a taller wide card doesn't stretch its row-mates.
+      return {
+        container: 'grid grid-cols-2 lg:grid-cols-4 gap-4 items-start',
+        cellClass: (i) => (i === 0 ? 'col-span-2' : ''),
+      };
+    case 'offset':
+      // Brick bond: alternating desktop columns nudged down half a cell via a
+      // static utility. Uniform cells, staggered rhythm.
+      return {
+        container: 'grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 items-stretch nord-grid-offset',
+        cellClass: NONE,
+      };
+    case 'runway':
+      // One horizontal-scroll row, no wrap — a lookbook/catwalk. Cells get a
+      // fixed flex-basis; the container scrolls with snap.
+      return {
+        container: 'flex gap-4 overflow-x-auto pb-3 nord-grid-runway',
+        cellClass: () => 'shrink-0 basis-[75%] sm:basis-[45%] lg:basis-[23%] snap-start',
+      };
+    case 'grid-4':
+    default:
+      return { container: 'grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 items-stretch', cellClass: NONE };
+  }
+}
+
+/**
+ * Back-compat shim: old callers passed a numeric gridCols and got a container
+ * class string. Maps the number to the equivalent gridStyle and returns just
+ * the container class. New code should use nordGridLayout(gridStyle).
  */
 export function nordGridClass(gridCols) {
-  switch (gridCols) {
-    case 3:
-      return 'grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 items-stretch';
-    case 4:
-    default:
-      return 'grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 items-stretch';
-  }
+  return nordGridLayout(gridCols === 3 ? 'grid-3' : 'grid-4').container;
 }
 
 /**
@@ -264,5 +324,21 @@ export function resolveTheme(template) {
     ? merged.layout.gridCols
     : NORD_TOKENS.layout.gridCols;
 
-  return { vars, heroStyle, cardStyle, gridCols };
+  // gridStyle resolution with legacy gridCols back-compat:
+  //  - if the template/shop set an explicit, valid gridStyle → it wins.
+  //  - else if it set only a legacy gridCols (3) → map to the matching style.
+  //  - else → NORD default ('grid-4').
+  // `rawLayout` is the un-merged input so we can tell "explicitly set" from
+  // "inherited NORD default" (both would look equal after the merge).
+  const rawLayout = (t.layout && typeof t.layout === 'object') ? t.layout : {};
+  let gridStyle;
+  if (TOKEN_ENUMS['layout.gridStyle'].includes(rawLayout.gridStyle)) {
+    gridStyle = rawLayout.gridStyle;
+  } else if (rawLayout.gridStyle === undefined && rawLayout.gridCols === 3) {
+    gridStyle = 'grid-3';
+  } else {
+    gridStyle = NORD_TOKENS.layout.gridStyle; // 'grid-4'
+  }
+
+  return { vars, heroStyle, cardStyle, gridCols, gridStyle };
 }

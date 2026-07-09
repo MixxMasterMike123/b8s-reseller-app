@@ -94,23 +94,25 @@ const TagPage = () => {
           ) : cards.length === 0 ? (
             <p className="text-ink-muted py-16 text-center">{t('collection_empty', 'Inga produkter i den här samlingen.')}</p>
           ) : (
-            <div className={store.__gridClass}>
-              {cards.map((p) => {
+            <div className={(store.__grid?.container) || store.__gridClass}>
+              {cards.map((p, i) => {
                 const { price, isFrom, compareAt } = getCardPrice(p);
+                const cellClass = store.__grid?.cellClass ? store.__grid.cellClass(i) : '';
                 return (
-                  <NordProductCard
-                    key={p.id}
-                    to={getProductUrl(p)}
-                    image={imageOf(p)}
-                    imageAlt={nameOf(p)}
-                    name={nameOf(p)}
-                    description=""
-                    priceSek={price}
-                    compareSek={compareAt}
-                    isFromPrice={isFrom}
-                    product={p}
-                    ctaLabel={t('product_choose_button', 'Välj')}
-                  />
+                  <div key={p.id} className={cellClass}>
+                    <NordProductCard
+                      to={getProductUrl(p)}
+                      image={imageOf(p)}
+                      imageAlt={nameOf(p)}
+                      name={nameOf(p)}
+                      description=""
+                      priceSek={price}
+                      compareSek={compareAt}
+                      isFromPrice={isFrom}
+                      product={p}
+                      ctaLabel={t('product_choose_button', 'Välj')}
+                    />
+                  </div>
                 );
               })}
             </div>

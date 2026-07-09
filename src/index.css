@@ -200,7 +200,31 @@
   queries active → later source order won → 2 columns), so the storefront grid
   silently dropped to 2-col. Using the real Tailwind grid-cols utilities avoids
   that entirely.
+
+  §nord-grid — non-uniform gridStyle helpers (see nordGridLayout in
+  nordTokens.js). These are PLAIN CSS rules (not Tailwind utilities), so they
+  are never purged and always ship. Only the desktop (lg) behavior differs;
+  mobile stays a simple readable grid/scroll.
+    .nord-grid-offset — brick bond: nudge alternating desktop columns down.
+    .nord-grid-runway — one horizontal-scroll row with snap.
 */
+.nord-grid-runway {
+  scroll-snap-type: x mandatory;
+  scrollbar-width: thin;
+}
+.nord-grid-runway::-webkit-scrollbar { height: 8px; }
+.nord-grid-runway::-webkit-scrollbar-thumb {
+  background: var(--color-line, rgba(0, 0, 0, 0.1));
+  border-radius: 999px;
+}
+/* Offset only kicks in at desktop, where the grid is 4-wide; below lg the grid
+   collapses to 1–2 cols and a vertical stagger would look broken. */
+@media (min-width: 1024px) {
+  .nord-grid-offset > *:nth-child(4n + 1),
+  .nord-grid-offset > *:nth-child(4n + 3) {
+    transform: translateY(2rem);
+  }
+}
 
 @layer utilities {
   /* Simple modal isolation */
