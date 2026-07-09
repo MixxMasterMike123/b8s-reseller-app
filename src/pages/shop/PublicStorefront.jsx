@@ -344,7 +344,7 @@ const PublicStorefront = () => {
                 <div className="mt-7 flex flex-wrap items-center gap-3">
                   <button
                     onClick={scrollToProducts}
-                    className="bg-accent text-white font-bold text-base px-6 py-3.5 rounded-el transition-transform duration-150 ease-nord hover:-translate-y-0.5 active:translate-y-px"
+                    className="bg-accent text-accent-ink font-bold text-base px-6 py-3.5 rounded-el transition-transform duration-150 ease-nord hover:-translate-y-0.5 active:translate-y-px"
                   >
                     {heroCtaLabel}
                   </button>
@@ -390,7 +390,7 @@ const PublicStorefront = () => {
                     }}
                   />
                 )}
-                <div className="absolute inset-0 bg-linear-to-b from-ink/0 via-ink/30 to-ink/75" />
+                <div className="absolute inset-0 bg-linear-to-b from-black/0 via-black/30 to-black/75" />
               </div>
 
               <div className="relative w-full p-7 lg:p-11 text-white">
@@ -409,7 +409,7 @@ const PublicStorefront = () => {
                 <div className="mt-7 flex items-center gap-6">
                   <button
                     onClick={scrollToProducts}
-                    className="bg-white text-ink font-bold text-base lg:text-lg px-8 py-4 rounded-full transition-all duration-300 ease-nord hover:-translate-y-0.5 hover:shadow-lift"
+                    className="bg-white text-[#1A1C1E] font-bold text-base lg:text-lg px-8 py-4 rounded-full transition-all duration-300 ease-nord hover:-translate-y-0.5 hover:shadow-lift"
                   >
                     {heroCtaLabel}
                   </button>
