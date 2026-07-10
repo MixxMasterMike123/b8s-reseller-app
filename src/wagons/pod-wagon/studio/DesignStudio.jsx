@@ -39,7 +39,7 @@ import { loadPod3dModels } from '../../../config/pod3dModels';
 import { tierTone, tierLabel } from '../components/podTier';
 import { isComposable, placementReadout, defaultPlacement } from './placementMath';
 import { renderMockup } from './mockupRender';
-import { uploadMockup } from './mockupUpload';
+import { uploadMockup, appendImageToProductGallery } from './mockupUpload';
 import TemplateBackground from './TemplateBackground';
 import CompositorCanvas from './CompositorCanvas';
 import ColorwayStrip from './ColorwayStrip';
@@ -55,7 +55,8 @@ import { db, storage } from '../../../firebase/config';
 import { withShopId } from '../../../config/withShopId';
 import { skuFromName, uniqueSku } from '../../../utils/productUrls';
 import { deriveVariantsFromGroups } from '../../../utils/variantDerivation';
-import { setMapping } from '../../../utils/podMappings';
+import { setMapping, listShopProductSkus } from '../../../utils/podMappings';
+import toast from 'react-hot-toast';
 import { STORE } from '../../../config/store';
 
 // Validation is ADVISORY (podValidation's contract: "WARN/FAIL never blocks — it
@@ -98,6 +99,10 @@ const DesignStudio = ({ artwork = [], loading = false, shopId = null }) => {
   const [reviewedColorways, setReviewedColorways] = useState(() => new Set());
   const [generating, setGenerating] = useState(false);
   const [mockupError, setMockupError] = useState(null);
+  // Existing products for the mockups' "Lägg till i produkt" picker — loaded lazily
+  // once mockups exist (same lazy pattern as Studio3DSection). Best-effort: a load
+  // failure just leaves the picker empty.
+  const [products, setProducts] = useState([]);
   // Publish (slice 4): the "Skapa produkt" step. result = { name, sku } on success.
   const [publishing, setPublishing] = useState(false);
   const [publishError, setPublishError] = useState(null);
@@ -308,6 +313,38 @@ const DesignStudio = ({ artwork = [], loading = false, shopId = null }) => {
       setMockupError(e?.message || 'Mockup-genereringen misslyckades.');
     } finally {
       setGenerating(false);
+    }
+  };
+
+  // Load this shop's products once there are mockups to add (for MockupPanel's
+  // "Lägg till i produkt" picker). Best-effort — a failure leaves it empty.
+  useEffect(() => {
+    if (!shopId || mockups.length === 0) return;
+    let alive = true;
+    listShopProductSkus(shopId)
+      .then((res) => { if (alive) setProducts(res?.products || []); })
+      .catch((e) => console.warn('DesignStudio: product list failed', e?.message));
+    return () => { alive = false; };
+  }, [shopId, mockups.length]);
+
+  // Append a single generated mockup to an existing product's SECONDARY gallery
+  // (never the main image), mirroring the 3D-vy's add-to-product. Fetches the
+  // mockup's object URL into a blob and delegates to the shared helper (prefix
+  // 'mockup'). Returns true on success so MockupPanel can clear its picker.
+  const addMockupToProduct = async (mockup, productId) => {
+    if (!mockup || !productId || !shopId) return false;
+    try {
+      const blob = await (await fetch(mockup.objectUrl)).blob();
+      await appendImageToProductGallery({
+        shopId, productId, blob, prefix: 'mockup', contentType: mockup.type,
+      });
+      const name = products.find((p) => p.id === productId)?.name || 'produkten';
+      toast.success(`Mockupen lades till som extra bild på ${name}.`);
+      return true;
+    } catch (e) {
+      console.warn('DesignStudio: addMockupToProduct failed', e?.message);
+      toast.error('Kunde inte lägga till bilden på produkten.');
+      return false;
     }
   };
 
@@ -715,6 +752,8 @@ const DesignStudio = ({ artwork = [], loading = false, shopId = null }) => {
           generating={generating}
           error={mockupError}
           canGenerate={Boolean(selectedTemplate && isComposable(selectedArtwork)) && !publishing}
+          products={products}
+          onAddToProduct={addMockupToProduct}
         />
 
         {/* Publish: pick colourways + sizes, price, and create the real product. */}

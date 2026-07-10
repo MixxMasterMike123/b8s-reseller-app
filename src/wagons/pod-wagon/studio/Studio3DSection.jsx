@@ -12,12 +12,10 @@
 // pixi.js loads lazily: DisplacementPreview is React.lazy'd, so its chunk is
 // fetched only when the seller opens the 3D view.
 import React, { Suspense, useEffect, useMemo, useRef, useState } from 'react';
-import { doc, updateDoc, arrayUnion } from 'firebase/firestore';
-import { ref as storageRef, uploadBytes, getDownloadURL } from 'firebase/storage';
 import toast from 'react-hot-toast';
-import { db, storage } from '../../../firebase/config';
 import { useShopId } from '../../../contexts/ShopContext';
 import { listShopProductSkus } from '../../../utils/podMappings';
+import { appendImageToProductGallery } from './mockupUpload';
 import { DEV_3D_GARMENTS } from './pixi/displacement3dConfig';
 
 const DisplacementPreview = React.lazy(() => import('./pixi/DisplacementPreview'));
@@ -219,22 +217,16 @@ const Studio3DSection = ({ artwork = null, placement = null, models = [] }) => {
     }
   };
 
-  // Append the rendered 3D image to the chosen product's SECONDARY gallery.
-  // NEVER touches imageUrl / b2cImageUrl (the main image) — append only. Uploads
-  // the PNG to the public product-image path, then updateDoc's b2cImageGallery.
+  // Append the rendered 3D image to the chosen product's SECONDARY gallery via the
+  // shared helper (prefix '3d'). NEVER touches imageUrl / b2cImageUrl (the main
+  // image) — the helper appends to b2cImageGallery only.
   const addToProduct = async () => {
     if (!targetProductId || !shopId) return;
     setAdding(true);
     try {
       const blob = await previewRef.current.extractPNG();
-      const path = `products/${shopId}/${targetProductId}/3d_${Date.now()}`;
-      const snap = await uploadBytes(storageRef(storage, path), blob, { contentType: 'image/png' });
-      const url = await getDownloadURL(snap.ref);
-      // arrayUnion appends atomically (no read-modify-write race with a concurrent
-      // gallery edit) and touches ONLY b2cImageGallery — the main image
-      // (imageUrl/b2cImageUrl) is never referenced, so it can't be replaced.
-      await updateDoc(doc(db, 'products', targetProductId), {
-        b2cImageGallery: arrayUnion(url),
+      await appendImageToProductGallery({
+        shopId, productId: targetProductId, blob, prefix: '3d', contentType: 'image/png',
       });
       const name = products.find((p) => p.id === targetProductId)?.name || 'produkten';
       toast.success(`3D-bilden lades till som extra bild på ${name}.`);
