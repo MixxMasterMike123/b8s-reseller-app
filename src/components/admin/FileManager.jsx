@@ -85,9 +85,9 @@ const FileManager = ({
   if (files.length === 0) {
     return (
       <div className="text-center py-8">
-        <DocumentIcon className="mx-auto h-12 w-12 text-gray-400" />
-        <h3 className="mt-2 text-sm font-medium text-gray-900">Inga bilagor</h3>
-        <p className="mt-1 text-sm text-gray-500">
+        <DocumentIcon className="mx-auto h-12 w-12 text-admin-text-faint" />
+        <h3 className="mt-2 text-sm font-medium text-admin-text">Inga bilagor</h3>
+        <p className="mt-1 text-sm text-admin-text-muted">
           Ladda upp filer för att visa dem här.
         </p>
       </div>

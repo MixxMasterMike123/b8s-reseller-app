@@ -63,7 +63,7 @@ const MockupPanel = ({
         type="button"
         onClick={onGenerate}
         disabled={!canGenerate || generating}
-        className="rounded-[var(--radius-admin-el)] bg-admin-primary px-3 py-1.5 text-[12px] font-medium text-white hover:bg-admin-primary-hover disabled:cursor-default disabled:opacity-40"
+        className="rounded-[var(--radius-admin-el)] bg-admin-primary px-3 py-1.5 text-[12px] font-medium text-white dark:text-admin-bg hover:bg-admin-primary-hover disabled:cursor-default disabled:opacity-40"
       >
         {generating ? 'Genererar…' : mockups.length ? 'Generera om' : 'Generera mockuper'}
       </button>

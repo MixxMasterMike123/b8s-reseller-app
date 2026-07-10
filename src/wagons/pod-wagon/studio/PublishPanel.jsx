@@ -420,7 +420,7 @@ const PublishPanel = ({
                   type="button"
                   onClick={submit}
                   disabled={!canPublish}
-                  className="rounded-[var(--radius-admin-el)] bg-admin-primary px-4 py-2 text-[13px] font-medium text-white hover:bg-admin-primary-hover disabled:cursor-default disabled:opacity-40"
+                  className="rounded-[var(--radius-admin-el)] bg-admin-primary px-4 py-2 text-[13px] font-medium text-white dark:text-admin-bg hover:bg-admin-primary-hover disabled:cursor-default disabled:opacity-40"
                 >
                   {publishing ? 'Skapar…' : 'Skapa produkt'}
                 </button>

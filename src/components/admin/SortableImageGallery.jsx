@@ -54,7 +54,7 @@ const SortableImageItem = ({ id, imageUrl, onRemove, label, className = "" }) =>
         <img
           src={imageUrl}
           alt={`Bild ${id}`}
-          className="w-full h-24 object-cover border border-gray-300 rounded-md bg-white"
+          className="w-full h-24 object-cover border border-admin-border rounded-md bg-white"
         />
         <div className="absolute inset-0 bg-black/0 hover:bg-black/10 transition-all duration-200 rounded-md flex items-center justify-center">
           <div className="text-white opacity-0 hover:opacity-100 transition-opacity duration-200 text-xs font-medium">
@@ -117,7 +117,7 @@ const SortableImageGallery = ({
 
   return (
     <div>
-      <h4 className="text-sm font-medium text-gray-700 mb-2">{label}</h4>
+      <h4 className="text-sm font-medium text-admin-text-muted mb-2">{label}</h4>
       <DndContext
         sensors={sensors}
         collisionDetection={closestCenter}

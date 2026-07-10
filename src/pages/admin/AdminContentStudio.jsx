@@ -308,7 +308,7 @@ const MediaTile = ({ asset, orderIdx, onToggle, onDelete, temporary = false }) =
 
       {/* Selection order badge (top-left). */}
       {isSelected && (
-        <span className="absolute left-1.5 top-1.5 grid h-6 w-6 place-items-center rounded-full bg-[var(--color-admin-primary)] text-[12px] font-semibold text-white shadow">
+        <span className="absolute left-1.5 top-1.5 grid h-6 w-6 place-items-center rounded-full bg-[var(--color-admin-primary)] text-[12px] font-semibold text-white dark:text-admin-bg shadow">
           {orderIdx + 1}
         </span>
       )}

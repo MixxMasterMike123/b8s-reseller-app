@@ -158,6 +158,25 @@
     --color-admin-text-faint: #6F7783;
     --color-admin-primary: #E3E3E3;
     --color-admin-primary-hover: #ffffff;
+
+    /* Badge/status tones re-tuned for the #181B20 surface: muted dark fills
+       with lifted text + dots (light-mode pastels are invisible here). */
+    --color-admin-success-bg: #1B3A2C;
+    --color-admin-success-text: #7FCFA4;
+    --color-admin-success-dot: #3FA372;
+    --color-admin-caution-bg: #3B301F;
+    --color-admin-caution-text: #E0B95C;
+    --color-admin-caution-dot: #D6A425;
+    --color-admin-info-bg: #1F2E42;
+    --color-admin-info-text: #8AB4E8;
+    --color-admin-info-dot: #5C8FD6;
+    --color-admin-critical-bg: #42221A;
+    --color-admin-critical-text: #EE9078;
+    --color-admin-critical-dot: #D65A3F;
+    --color-admin-neutral-bg: #2A2F36;
+    --color-admin-neutral-text: #A4ABB6;
+    --color-admin-neutral-dot: #6F7783;
+
     --shadow-admin: 0 1px 0 #00000040, 0 1px 3px -1px #00000066;
   }
 }
