@@ -27,7 +27,13 @@ export const effectiveDpiFor = (widthPx, heightPx, areaMm) => {
   return Math.round(Math.min(dpiW, dpiH));
 };
 
-const norm = (s) => String(s || '').trim().toLowerCase();
+// Extension aliases: sellers name files .tif/.jpeg as often as .tiff/.jpg —
+// canonicalize BOTH sides of the format match so profiles only list one spelling.
+const EXT_ALIAS = { tif: 'tiff', jpeg: 'jpg' };
+const norm = (s) => {
+  const e = String(s || '').trim().toLowerCase();
+  return EXT_ALIAS[e] || e;
+};
 
 // Find the accepted-format entry for an ext (case-insensitive). Returns the entry
 // ({ext, preferred}) or null if the format isn't accepted at all.
