@@ -43,7 +43,8 @@
     "react-router-dom": "^6.30.0",
     "recharts": "^2.15.4",
     "schema-dts": "^1.1.5",
-    "stripe": "^18.4.0"
+    "stripe": "^18.4.0",
+    "utif2": "^4.1.0"
   },
   "devDependencies": {
     "@firebase/rules-unit-testing": "^3.0.4",

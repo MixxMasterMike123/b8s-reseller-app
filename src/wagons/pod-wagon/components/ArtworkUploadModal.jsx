@@ -13,7 +13,7 @@ import toast from 'react-hot-toast';
 import { Field, Input, Select, Button } from '../../../components/admin/ui';
 import StatusPill from '../../../components/admin/ui/StatusPill';
 import { loadPodProfiles, getProfileById, getPodProfilesMeta } from '../../../config/podProfiles';
-import { readImageDimensions, generatePodPreview, uploadPodOriginal, extOf } from '../../../utils/podUpload';
+import { readImageDimensions, generatePodPreview, uploadPodOriginal, extOf, toDecodableFile } from '../../../utils/podUpload';
 import { validateArtwork } from '../../../utils/podValidation';
 import { createArtwork, replaceArtworkFile } from '../../../utils/podArtwork';
 import { setMapping } from '../../../utils/podMappings';
@@ -34,6 +34,10 @@ const ArtworkUploadModal = ({ shopId, products = [], onClose, onCreated, replace
   const [file, setFile] = useState(null);
   const [measuring, setMeasuring] = useState(false);
   const [measured, setMeasured] = useState(null); // { widthPx, heightPx, hasAlphaChannel, transparentPixelRatio, previewObjUrl }
+  // TIFF is undecodable by the browser; the measure effect derives a PNG (measurement +
+  // preview only — the ORIGINAL still prints) and stashes it here so handleSave's
+  // generatePodPreview reuses it rather than re-decoding a large TIFF. Non-TIFF: === file.
+  const [decodableFile, setDecodableFile] = useState(null);
   const [verdict, setVerdict] = useState(null);    // { tier, effectiveDpi, reasons }
   const [saving, setSaving] = useState(false);
 
@@ -62,15 +66,20 @@ const ArtworkUploadModal = ({ shopId, products = [], onClose, onCreated, replace
   useEffect(() => {
     let cancelled = false;
     const run = async () => {
-      if (!file || !profile) { setMeasured(null); setVerdict(null); return; }
+      if (!file || !profile) { setMeasured(null); setVerdict(null); setDecodableFile(null); return; }
       setMeasuring(true);
       try {
-        const dims = await readImageDimensions(file);
+        // TIFF → PNG for the browser to measure/preview (original still prints). Decode
+        // ONCE here; handleSave reuses `decodable` so a big TIFF isn't decoded twice.
+        const decodable = await toDecodableFile(file);
+        if (cancelled) return;
+        setDecodableFile(decodable);
+        const dims = await readImageDimensions(decodable);
         // Local preview for the modal (object URL) + alpha read happen together via
         // a lightweight measure: we reuse generatePodPreview's alpha logic only at
         // SAVE time (it uploads); for the pre-commit check we read dims + a cheap
         // alpha probe by drawing to an offscreen canvas here.
-        const probe = await probeAlpha(file);
+        const probe = await probeAlpha(decodable);
         if (cancelled) return;
         const m = {
           widthPx: dims.width,
@@ -108,7 +117,8 @@ const ArtworkUploadModal = ({ shopId, products = [], onClose, onCreated, replace
     setSaving(true);
     try {
       const original = await uploadPodOriginal(file, shopId, profile);
-      const preview = await generatePodPreview(file, shopId);
+      // Preview from the decodable (PNG for TIFF; === file otherwise) — original prints.
+      const preview = await generatePodPreview(decodableFile || file, shopId);
       const meta = getPodProfilesMeta();
       const fileFields = {
         originalUrl: original.originalUrl,
@@ -329,7 +339,7 @@ const ArtworkUploadModal = ({ shopId, products = [], onClose, onCreated, replace
             )}
             <div className="flex justify-end gap-2 pt-1">
               <Button variant="secondary" onClick={onClose}>Avbryt</Button>
-              <Button variant="primary" onClick={handleSave} disabled={!file || saving}>
+              <Button variant="primary" onClick={handleSave} disabled={!file || saving || measuring}>
                 {saving ? (isReplace ? 'Ersätter…' : 'Laddar upp…') : isReplace ? 'Ersätt fil' : 'Spara original'}
               </Button>
             </div>

@@ -28,6 +28,46 @@ const safeName = (name) => String(name || 'artwork').replace(/[^a-zA-Z0-9.-]/g, 
 const RASTER_DECODABLE = new Set(['png', 'jpg', 'jpeg', 'webp', 'gif', 'bmp']);
 
 /**
+ * toDecodableFile(file) → Promise<File>
+ * Browsers can't decode TIFF, so readImageDimensions/generatePodPreview go blind on
+ * a .tif/.tiff pick (null dims, no preview → Design Studio disables the artwork).
+ * For TIFF we decode the FIRST page client-side into a PNG File the browser CAN read.
+ *
+ * INVARIANT: the returned PNG is ONLY for measurement + preview. The ORIGINAL TIFF is
+ * still what uploadPodOriginal ships to the printer — callers must keep passing the
+ * original file there. Any decode failure returns the ORIGINAL unchanged, so we simply
+ * fall back to today's dims-unknown WARN instead of crashing.
+ *
+ * utif2 is lazy-imported so the decoder never lands in the main bundle.
+ */
+export const toDecodableFile = async (file) => {
+  if (extOf(file.name) !== 'tif' && extOf(file.name) !== 'tiff') return file;
+  try {
+    const mod = await import('utif2');
+    const UTIF = mod.default || mod;
+    const buffer = await file.arrayBuffer();
+    const ifds = UTIF.decode(buffer);
+    if (!ifds.length) throw new Error('no IFDs');
+    UTIF.decodeImage(buffer, ifds[0]);
+    const rgba = UTIF.toRGBA8(ifds[0]); // Uint8Array, RGBA
+    const w = ifds[0].width;
+    const h = ifds[0].height;
+    const canvas = document.createElement('canvas');
+    canvas.width = w;
+    canvas.height = h;
+    const ctx = canvas.getContext('2d');
+    ctx.putImageData(new ImageData(new Uint8ClampedArray(rgba.buffer), w, h), 0, 0);
+    const blob = await new Promise((res) => canvas.toBlob(res, 'image/png'));
+    if (!blob) throw new Error('toBlob returned null');
+    return new File([blob], file.name.replace(/\.tiff?$/i, '.png'), { type: 'image/png' });
+  } catch (err) {
+    // Graceful fallback: measure/preview go blind (dims-unknown WARN), original still prints.
+    console.warn('toDecodableFile: TIFF decode failed, using original for measurement:', err);
+    return file;
+  }
+};
+
+/**
  * readImageDimensions(file) → Promise<{ width, height }>
  * Natural pixel dims via the Image() DOM API. Returns { width:null, height:null }
  * for formats the browser can't decode (PDF/SVG/TIFF) or on decode error — the
