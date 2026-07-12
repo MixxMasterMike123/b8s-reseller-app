@@ -11,7 +11,7 @@ exports.generatePrintOrderNotificationTemplate = void 0;
 // minimisation boundary the print callable projection enforces).
 const emailLayout_1 = require("./emailLayout");
 function generatePrintOrderNotificationTemplate(data) {
-    const brand = data.brandName || 'MeteorPR';
+    const brand = data.brandName || 'ChopShop';
     const lineCount = data.lines.length;
     const deliveryLabel = data.deliveryMethod === 'pickup' ? 'Upphämtning' : 'Frakt till kund';
     const lineItems = data.lines.map((ln) => {

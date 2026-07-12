@@ -36,7 +36,7 @@ function chip(value: string): string {
 
 export function generateLoginCredentialsTemplate(data: LoginCredentialsData, lang: string = 'sv-SE') {
   const { userInfo, credentials, accountType, wasExistingAuthUser } = data;
-  const brand = data.brandName || 'MeteorPR';
+  const brand = data.brandName || 'ChopShop';
   const en = lang.startsWith('en');
 
   const isAffiliate = accountType === 'AFFILIATE';

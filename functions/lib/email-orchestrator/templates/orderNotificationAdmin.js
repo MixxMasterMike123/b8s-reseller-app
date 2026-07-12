@@ -58,7 +58,7 @@ function formatPaymentMethod(method) {
 }
 function generateOrderNotificationAdminTemplate(data, lang = 'sv-SE') {
     const { orderData, orderType, orderSummary } = data;
-    const brand = data.brandName || 'MeteorPR';
+    const brand = data.brandName || 'ChopShop';
     const paymentMethod = orderData.payment?.method || 'unknown';
     const paymentStatus = orderData.payment?.status || 'unknown';
     const paymentIntentId = orderData.payment?.paymentIntentId || '';

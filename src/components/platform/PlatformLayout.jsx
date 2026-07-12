@@ -59,7 +59,7 @@ const PlatformLayout = ({ children }) => {
         <div className="flex items-center gap-2 px-5 py-6">
           <ShieldCheckIcon className="h-7 w-7 text-indigo-400" />
           <div>
-            <div className="text-sm font-bold tracking-tight">meteorpr</div>
+            <div className="text-sm font-bold tracking-tight">ChopShop</div>
             <div className="text-[11px] uppercase tracking-widest text-indigo-300/70">Platform</div>
           </div>
         </div>

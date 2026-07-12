@@ -252,7 +252,7 @@ export const generateAffiliateLink = (affiliateCode, preferredLang, productPath 
  */
 export const getShopSeoTitle = (language = 'sv-SE', store = STORE) => {
   // store = the live per-shop settings (useStoreSettings) so the browser tab
-  // shows the real shop name, not the static 'My Shop' default. Falls back to
+  // shows the real shop name, not the static 'ChopShop' default. Falls back to
   // STORE for callers without the live context.
   const name = store.shopName || STORE.shopName;
   const tagline = store.tagline || STORE.tagline;

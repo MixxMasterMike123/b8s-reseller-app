@@ -136,7 +136,7 @@ function generateB2CTemplate(
   affiliateCode?: string
 ) {
   const { orderData, customerInfo } = data;
-  const brand = data.brandName || 'MeteorPR';
+  const brand = data.brandName || 'ChopShop';
   const { orderNumber, items, subtotal, shipping, vat, total, discountAmount = 0 } = orderData;
   const en = lang.startsWith('en');
 
@@ -220,7 +220,7 @@ function generateB2BTemplate(
   supportUrl: string
 ) {
   const { orderData } = data;
-  const brand = data.brandName || 'MeteorPR';
+  const brand = data.brandName || 'ChopShop';
   const { orderNumber, total } = orderData;
   const en = lang.startsWith('en');
 

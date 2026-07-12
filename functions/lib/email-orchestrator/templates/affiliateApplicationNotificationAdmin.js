@@ -6,7 +6,7 @@ exports.generateAffiliateApplicationNotificationAdminTemplate = void 0;
 const emailLayout_1 = require("./emailLayout");
 function generateAffiliateApplicationNotificationAdminTemplate(data) {
     const { applicantInfo, applicationId, adminPortalUrl } = data;
-    const brand = data.brandName || 'MeteorPR';
+    const brand = data.brandName || 'ChopShop';
     const link = (href) => `<a href="${(0, emailLayout_1.esc)(href)}" style="color:${emailLayout_1.emailTokens.ink};text-decoration:underline;word-break:break-all;">${(0, emailLayout_1.esc)(href)}</a>`;
     const socials = applicantInfo.socials || {};
     const socialParts = [];

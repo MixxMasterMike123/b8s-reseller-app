@@ -106,9 +106,9 @@ const LandingPage = () => {
 
       {/* Top bar */}
       <header style={styles.header}>
-        <div style={styles.brandRow} aria-label="meteorpr">
+        <div style={styles.brandRow} aria-label="ChopShop">
           <Mark />
-          <span style={styles.wordmark}>meteor<span style={styles.wordmarkAccent}>pr</span></span>
+          <span style={styles.wordmark}>Chop<span style={styles.wordmarkAccent}>Shop</span></span>
         </div>
         <Link to="/login" style={styles.navLogin}>Logga in</Link>
       </header>
@@ -127,7 +127,7 @@ const LandingPage = () => {
           </h1>
 
           <p style={{ ...styles.lede, ...rise(220) }}>
-            meteorpr är webbutiken utan krångel. Din butik, ditt varumärke,
+            ChopShop är webbutiken utan krångel. Din butik, ditt varumärke,
             allt du behöver — och inget du inte behöver. Logga in och sälj.
           </p>
 
@@ -173,8 +173,8 @@ const LandingPage = () => {
       {/* Footer */}
       <footer style={styles.footer}>
         <div style={styles.footerRow}>
-          <span style={styles.footerBrand}>meteor<span style={styles.wordmarkAccent}>pr</span></span>
-          <span style={styles.footerMeta}>© {YEAR} meteorpr · Webbutik för småföretag</span>
+          <span style={styles.footerBrand}>Chop<span style={styles.wordmarkAccent}>Shop</span></span>
+          <span style={styles.footerMeta}>© {YEAR} ChopShop · Webbutik för småföretag</span>
         </div>
       </footer>
     </div>
@@ -208,7 +208,7 @@ const ContactSection = () => {
       setSent(true);
     } catch (err) {
       // eslint-disable-next-line no-console
-      console.error('[meteorpr] sales lead submit failed:', err);
+      console.error('[ChopShop] sales lead submit failed:', err);
       setError('Något gick fel — försök igen om en stund, eller mejla oss direkt.');
     } finally {
       setSending(false);

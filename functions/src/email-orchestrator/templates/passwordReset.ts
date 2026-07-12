@@ -21,7 +21,7 @@ export interface PasswordResetData {
 
 export function generatePasswordResetTemplate(data: PasswordResetData, lang: string = 'sv-SE') {
   const { email, resetCode, userAgent, timestamp, userType } = data;
-  const brand = data.brandName || 'MeteorPR';
+  const brand = data.brandName || 'ChopShop';
 
   // Countryless storefront URLs (i18n deferred).
   const resetUrl = `${EMAIL_CONFIG.URLS.B2C_SHOP}/reset-password?code=${resetCode}`;

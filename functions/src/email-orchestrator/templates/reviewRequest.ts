@@ -51,7 +51,7 @@ export function generateReviewRequestTemplate(
   data: ReviewRequestData,
   lang: string = 'sv-SE'
 ) {
-  const brand = data.brandName || 'MeteorPR';
+  const brand = data.brandName || 'ChopShop';
   const en = lang.startsWith('en');
   const items = Array.isArray(data.items) ? data.items : [];
   const firstName = typeof data.customerFirstName === 'string' ? data.customerFirstName.trim() : '';

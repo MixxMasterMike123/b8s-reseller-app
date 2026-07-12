@@ -12,7 +12,7 @@
  */
 export const STORE = {
   // Display identity
-  shopName: 'My Shop',
+  shopName: 'ChopShop',
   legalName: 'My Company',
   tagline: 'Quality products, delivered.',
 

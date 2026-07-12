@@ -151,7 +151,7 @@ function getNextSteps(status: string, lang: string, pickupLocationName?: string)
 export function generateOrderStatusUpdateTemplate(data: OrderStatusUpdateData, lang: string = 'sv-SE', orderId?: string) {
   const { orderData, userData, newStatus, previousStatus, trackingNumber, estimatedDelivery, notes, pickupLocationName } = data;
   const { orderNumber } = orderData;
-  const brand = data.brandName || 'MeteorPR';
+  const brand = data.brandName || 'ChopShop';
 
   // Ensure all required fields are present and valid
   if (!orderData?.orderNumber || !userData?.email || !newStatus) {

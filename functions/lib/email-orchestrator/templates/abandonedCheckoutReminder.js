@@ -12,7 +12,7 @@ exports.generateAbandonedCheckoutReminderTemplate = void 0;
 const emailLayout_1 = require("./emailLayout");
 const money = (n) => `${Math.round(Number(n) || 0)} kr`;
 function generateAbandonedCheckoutReminderTemplate(data, lang = 'sv-SE') {
-    const brand = data.brandName || 'MeteorPR';
+    const brand = data.brandName || 'ChopShop';
     const en = lang.startsWith('en');
     const items = Array.isArray(data.items) ? data.items : [];
     const total = Number(data.totals?.total) || 0;

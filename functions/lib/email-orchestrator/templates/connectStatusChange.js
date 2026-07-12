@@ -6,7 +6,7 @@ exports.generateConnectStatusChangeTemplate = void 0;
 // account.updated webhook on meaningful transitions only. CTA → /admin/payments.
 const emailLayout_1 = require("./emailLayout");
 function generateConnectStatusChangeTemplate(data) {
-    const brand = data.brandName || 'MeteorPR';
+    const brand = data.brandName || 'ChopShop';
     const changes = Array.isArray(data.changes) ? data.changes : [];
     const body = (0, emailLayout_1.renderHeading)('Uppdatering om dina utbetalningar') +
         (0, emailLayout_1.renderParagraph)('Statusen för ditt Stripe-anslutna konto har ändrats:') +

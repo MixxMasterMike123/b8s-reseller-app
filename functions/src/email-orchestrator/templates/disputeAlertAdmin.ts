@@ -25,7 +25,7 @@ export interface DisputeAlertAdminData {
 }
 
 export function generateDisputeAlertAdminTemplate(data: DisputeAlertAdminData): { subject: string; html: string; text: string } {
-  const brand = data.brandName || 'MeteorPR';
+  const brand = data.brandName || 'ChopShop';
   const shopLabel = data.shopName ? `${data.shopName} (${data.shopId || ''})` : String(data.shopId || 'okänd butik');
   const kind = data.alertKind === 'shortfall' ? 'Underskott vid återkravshantering' : 'Nytt återkrav (dispute)';
 

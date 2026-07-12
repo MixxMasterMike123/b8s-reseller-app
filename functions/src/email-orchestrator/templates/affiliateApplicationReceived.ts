@@ -27,7 +27,7 @@ interface AffiliateApplicationReceivedData {
 
 export function generateAffiliateApplicationReceivedTemplate(data: AffiliateApplicationReceivedData): string {
   const { applicantInfo, applicationId, language } = data;
-  const brand = data.brandName || 'MeteorPR';
+  const brand = data.brandName || 'ChopShop';
   const en = language.startsWith('en');
   const supportUrl = `${EMAIL_CONFIG.URLS.B2B_PORTAL}/contact`;
 

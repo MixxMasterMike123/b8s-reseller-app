@@ -114,7 +114,7 @@ function getNextSteps(status, lang, pickupLocationName) {
 function generateOrderStatusUpdateTemplate(data, lang = 'sv-SE', orderId) {
     const { orderData, userData, newStatus, previousStatus, trackingNumber, estimatedDelivery, notes, pickupLocationName } = data;
     const { orderNumber } = orderData;
-    const brand = data.brandName || 'MeteorPR';
+    const brand = data.brandName || 'ChopShop';
     // Ensure all required fields are present and valid
     if (!orderData?.orderNumber || !userData?.email || !newStatus) {
         throw new Error('Missing required data for order status update template');

@@ -64,7 +64,7 @@ export const adminSeedConfig = {
 
 // Commerce defaults — per-shop, env-overridable
 export const commerceConfig = {
-  shopName: process.env.SHOP_NAME || 'MeteorPR',
+  shopName: process.env.SHOP_NAME || 'ChopShop',
   // Prefix for human-readable order numbers, e.g. ORD-123456-AB12. Changing
   // it only affects NEW orders; lookups (withdrawal etc.) match the stored
   // string, so old B8S-… numbers keep resolving.

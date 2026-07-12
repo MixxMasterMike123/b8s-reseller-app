@@ -36,7 +36,7 @@ interface AffiliateApplicationAdminData {
 
 export function generateAffiliateApplicationNotificationAdminTemplate(data: AffiliateApplicationAdminData): string {
   const { applicantInfo, applicationId, adminPortalUrl } = data;
-  const brand = data.brandName || 'MeteorPR';
+  const brand = data.brandName || 'ChopShop';
 
   const link = (href: string) =>
     `<a href="${esc(href)}" style="color:${emailTokens.ink};text-decoration:underline;word-break:break-all;">${esc(href)}</a>`;

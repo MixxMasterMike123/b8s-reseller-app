@@ -21,7 +21,7 @@ export interface RefundConfirmationData {
 }
 
 export function generateRefundConfirmationTemplate(data: RefundConfirmationData): { subject: string; html: string; text: string } {
-  const brand = data.brandName || 'MeteorPR';
+  const brand = data.brandName || 'ChopShop';
   const orderNumber = String(data.orderNumber || '');
   const amountLabel = `${Number(data.refundAmountSek || 0).toFixed(0)} ${data.currency || 'SEK'}`;
 

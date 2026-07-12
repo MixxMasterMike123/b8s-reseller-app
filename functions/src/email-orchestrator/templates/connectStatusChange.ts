@@ -18,7 +18,7 @@ export interface ConnectStatusChangeData {
 }
 
 export function generateConnectStatusChangeTemplate(data: ConnectStatusChangeData): { subject: string; html: string; text: string } {
-  const brand = data.brandName || 'MeteorPR';
+  const brand = data.brandName || 'ChopShop';
   const changes = Array.isArray(data.changes) ? data.changes : [];
 
   const body =

@@ -113,7 +113,7 @@ export function StoreSettingsProvider({ children }) {
   // Per-shop browser-tab identity — runs on BOTH the storefront and the admin
   // (both mount this provider, keyed on the active/managed shopId), so each tab
   // shows the right shop's name + favicon instead of the static index.html
-  // 'My Shop' / neutral icon. Page-level <Helmet> titles (product/legal pages)
+  // 'ChopShop' / neutral icon. Page-level <Helmet> titles (product/legal pages)
   // still win where they set one; this is the shop-wide default + the favicon,
   // which Helmet never touches. Waits for __loaded so we don't flash the static
   // STORE default over a real shop name.

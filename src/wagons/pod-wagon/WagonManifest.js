@@ -31,7 +31,7 @@ export const PodWagonManifest = {
   type: 'fulfillment',
   enabled: true, // REQUIRED true to mount (see note above). Per-shop gate is features.pod.
 
-  author: 'Meteor PR',
+  author: 'ChopShop',
   license: 'proprietary',
   tags: ['pod', 'print-on-demand', 'fulfillment', 'artwork'],
 

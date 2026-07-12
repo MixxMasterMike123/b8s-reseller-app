@@ -26,7 +26,7 @@ export interface EmailVerificationData {
 
 export function generateEmailVerificationTemplate(data: EmailVerificationData): { subject: string; html: string } {
   const { customerInfo, verificationCode, language, source } = data;
-  const brand = data.brandName || 'MeteorPR';
+  const brand = data.brandName || 'ChopShop';
 
   // Countryless storefront URLs (i18n deferred).
   const verificationUrl = `${EMAIL_CONFIG.URLS.B2C_SHOP}/verify-email?oobCode=${verificationCode}`;

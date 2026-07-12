@@ -5,7 +5,7 @@ exports.generateRefundConfirmationTemplate = void 0;
 // per-shop branded. Fired from connectRefund.ts after a refund succeeds.
 const emailLayout_1 = require("./emailLayout");
 function generateRefundConfirmationTemplate(data) {
-    const brand = data.brandName || 'MeteorPR';
+    const brand = data.brandName || 'ChopShop';
     const orderNumber = String(data.orderNumber || '');
     const amountLabel = `${Number(data.refundAmountSek || 0).toFixed(0)} ${data.currency || 'SEK'}`;
     const body = (0, emailLayout_1.renderHeading)('Återbetalning genomförd') +

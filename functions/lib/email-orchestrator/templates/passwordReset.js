@@ -6,7 +6,7 @@ const config_1 = require("../core/config");
 const emailLayout_1 = require("./emailLayout");
 function generatePasswordResetTemplate(data, lang = 'sv-SE') {
     const { email, resetCode, userAgent, timestamp, userType } = data;
-    const brand = data.brandName || 'MeteorPR';
+    const brand = data.brandName || 'ChopShop';
     // Countryless storefront URLs (i18n deferred).
     const resetUrl = `${config_1.EMAIL_CONFIG.URLS.B2C_SHOP}/reset-password?code=${resetCode}`;
     const loginUrl = userType === 'AFFILIATE' || userType === 'B2B'

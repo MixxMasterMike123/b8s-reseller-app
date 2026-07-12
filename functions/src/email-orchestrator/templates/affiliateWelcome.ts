@@ -36,7 +36,7 @@ function chip(value: string): string {
 
 export function generateAffiliateWelcomeTemplate(data: AffiliateWelcomeData): { subject: string; html: string } {
   const { affiliateInfo, credentials, wasExistingAuthUser, language } = data;
-  const brand = data.brandName || 'MeteorPR';
+  const brand = data.brandName || 'ChopShop';
   const en = language.startsWith('en');
 
   const portalUrl = `${EMAIL_CONFIG.URLS.B2C_SHOP}/affiliate-portal`;

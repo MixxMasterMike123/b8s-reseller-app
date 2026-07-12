@@ -80,7 +80,7 @@ exports.generateOrderConfirmationTemplate = generateOrderConfirmationTemplate;
 // B2C Template (Consumer-focused)
 function generateB2CTemplate(data, lang, customerName, orderUrl, supportUrl, affiliateCode) {
     const { orderData, customerInfo } = data;
-    const brand = data.brandName || 'MeteorPR';
+    const brand = data.brandName || 'ChopShop';
     const { orderNumber, items, subtotal, shipping, vat, total, discountAmount = 0 } = orderData;
     const en = lang.startsWith('en');
     // Click & Collect: pickup orders show an "Upphämtning" cost row + section
@@ -143,7 +143,7 @@ function generateB2CTemplate(data, lang, customerName, orderUrl, supportUrl, aff
 // B2B Template (Business-focused)
 function generateB2BTemplate(data, lang, customerName, supportUrl) {
     const { orderData } = data;
-    const brand = data.brandName || 'MeteorPR';
+    const brand = data.brandName || 'ChopShop';
     const { orderNumber, total } = orderData;
     const en = lang.startsWith('en');
     const detailRows = (0, emailLayout_1.renderKeyValueRows)([

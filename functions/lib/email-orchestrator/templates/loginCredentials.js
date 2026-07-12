@@ -10,7 +10,7 @@ function chip(value) {
 }
 function generateLoginCredentialsTemplate(data, lang = 'sv-SE') {
     const { userInfo, credentials, accountType, wasExistingAuthUser } = data;
-    const brand = data.brandName || 'MeteorPR';
+    const brand = data.brandName || 'ChopShop';
     const en = lang.startsWith('en');
     const isAffiliate = accountType === 'AFFILIATE';
     const loginUrl = isAffiliate

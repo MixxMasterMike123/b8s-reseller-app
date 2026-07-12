@@ -8,7 +8,7 @@ const config_1 = require("../core/config");
 const emailLayout_1 = require("./emailLayout");
 function generateAffiliateApplicationReceivedTemplate(data) {
     const { applicantInfo, applicationId, language } = data;
-    const brand = data.brandName || 'MeteorPR';
+    const brand = data.brandName || 'ChopShop';
     const en = language.startsWith('en');
     const supportUrl = `${config_1.EMAIL_CONFIG.URLS.B2B_PORTAL}/contact`;
     const steps = en

@@ -20,7 +20,7 @@ export const EMAIL_CONFIG = {
   // shopId threading; these values are the neutral fallback. The from ADDRESS
   // is always the platform's verified Resend sending domain.
   SMTP: {
-    FROM_NAME: process.env.EMAIL_FROM_NAME || 'MeteorPR',
+    FROM_NAME: process.env.EMAIL_FROM_NAME || 'ChopShop',
     FROM_EMAIL: process.env.EMAIL_FROM_EMAIL || 'no-reply@send.mohlenmedia.com',
     // Empty default = no reply-to header unless a shop supplies supportEmail
     // (or the env overrides). Never a brand-specific mailbox.

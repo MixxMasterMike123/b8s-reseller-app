@@ -6,7 +6,7 @@ exports.generateDisputeAlertAdminTemplate = void 0;
 // stripeWebhook.ts. Names the shop so a multi-shop inbox can triage.
 const emailLayout_1 = require("./emailLayout");
 function generateDisputeAlertAdminTemplate(data) {
-    const brand = data.brandName || 'MeteorPR';
+    const brand = data.brandName || 'ChopShop';
     const shopLabel = data.shopName ? `${data.shopName} (${data.shopId || ''})` : String(data.shopId || 'okänd butik');
     const kind = data.alertKind === 'shortfall' ? 'Underskott vid återkravshantering' : 'Nytt återkrav (dispute)';
     const body = (0, emailLayout_1.renderHeading)(kind) +

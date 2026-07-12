@@ -46,7 +46,7 @@ export function generateAbandonedCheckoutReminderTemplate(
   data: AbandonedCheckoutReminderData,
   lang: string = 'sv-SE'
 ) {
-  const brand = data.brandName || 'MeteorPR';
+  const brand = data.brandName || 'ChopShop';
   const en = lang.startsWith('en');
   const items = Array.isArray(data.items) ? data.items : [];
   const total = Number(data.totals?.total) || 0;

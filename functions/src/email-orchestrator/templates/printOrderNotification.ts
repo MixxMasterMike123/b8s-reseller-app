@@ -36,7 +36,7 @@ export interface PrintOrderNotificationData {
 export function generatePrintOrderNotificationTemplate(
   data: PrintOrderNotificationData
 ): { subject: string; html: string; text: string } {
-  const brand = data.brandName || 'MeteorPR';
+  const brand = data.brandName || 'ChopShop';
   const lineCount = data.lines.length;
   const deliveryLabel = data.deliveryMethod === 'pickup' ? 'Upphämtning' : 'Frakt till kund';
 

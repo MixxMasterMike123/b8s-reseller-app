@@ -10,7 +10,7 @@ function chip(value) {
 }
 function generateAffiliateWelcomeTemplate(data) {
     const { affiliateInfo, credentials, wasExistingAuthUser, language } = data;
-    const brand = data.brandName || 'MeteorPR';
+    const brand = data.brandName || 'ChopShop';
     const en = language.startsWith('en');
     const portalUrl = `${config_1.EMAIL_CONFIG.URLS.B2C_SHOP}/affiliate-portal`;
     const referralUrl = `${config_1.EMAIL_CONFIG.URLS.B2C_SHOP}/?ref=${affiliateInfo.affiliateCode}`;
