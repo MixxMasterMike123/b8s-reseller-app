@@ -386,10 +386,10 @@ export const LanguageCurrencyProvider = ({ children }) => {
 
   // Timeout fallback for when no redirect happens (ONLY for unsupported countries)
   useEffect(() => {
-    if (typeof window !== 'undefined' && 
-        window.location.hostname === 'shop.b8shield.com' && 
-        !isInitialized) {
-      
+    // SE-ONLY: geo-redirect fallback (no hostname gate — the storefront is the
+    // only surface and it's Swedish-only on every host, incl. custom domains).
+    if (typeof window !== 'undefined' && !isInitialized) {
+
       // Check if we have country from either params or path
       const countryFromParams = urlCountryCode;
       const countryFromPath = getCountryFromPath();
@@ -467,8 +467,10 @@ export const LanguageCurrencyProvider = ({ children }) => {
     countryConfig: urlCountryCode ? getCountryConfig(urlCountryCode) : null,
     isCountrySupported: urlCountryCode ? isCountrySupported(urlCountryCode) : true,
     
-    // Computed properties
-    isShopDomain: typeof window !== 'undefined' && window.location.hostname === 'shop.b8shield.com',
+    // Computed properties. SE-ONLY: the storefront is Swedish-only on every host
+    // (path-prefix or custom domain), so this is always the shop context — kept
+    // as a stable flag for consumers (SmartPrice) rather than a hostname sniff.
+    isShopDomain: true,
     isPrimaryMarket: market === 'primary',
     isSecondaryMarket: market === 'secondary'
   };

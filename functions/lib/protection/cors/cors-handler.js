@@ -4,8 +4,8 @@ exports.corsHandler = void 0;
 const app_urls_1 = require("../../config/app-urls");
 const corsHandler = (request, response) => {
     const origin = request.headers.origin;
-    // Allow requests from configured domains
-    if (origin && isAllowedOrigin(origin)) {
+    // Allow requests from configured domains (static list + custom-domain regex)
+    if (origin && app_urls_1.appUrls.isAllowedOrigin(origin)) {
         response.set('Access-Control-Allow-Origin', origin);
         response.set('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
         response.set('Access-Control-Allow-Headers', 'Content-Type, Authorization');
@@ -16,7 +16,4 @@ const corsHandler = (request, response) => {
     return false;
 };
 exports.corsHandler = corsHandler;
-function isAllowedOrigin(origin) {
-    return app_urls_1.appUrls.CORS_ORIGINS.includes(origin);
-}
 //# sourceMappingURL=cors-handler.js.map

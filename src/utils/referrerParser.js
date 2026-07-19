@@ -18,11 +18,8 @@ export const parseReferrer = (referrerUrl) => {
     const hostname = url.hostname.toLowerCase();
     
     // Filter out internal/development domains - show as Direct
-    if (hostname.includes('localhost') || 
-        hostname.includes('127.0.0.1') || 
-        hostname.includes('shop.b8shield.com') ||
-        hostname.includes('partner.b8shield.com') ||
-        hostname.includes('b8shield-reseller-app')) {
+    if (hostname.includes('localhost') ||
+        hostname.includes('127.0.0.1')) {
       return { name: 'Direct', category: 'direct' };
     }
     

@@ -68,6 +68,7 @@ import AdminCollectionEdit from './pages/admin/AdminCollectionEdit';
 import AdminMenu from './pages/admin/AdminMenu';
 import AdminSettings from './pages/admin/AdminSettings';
 import AdminPayments from './pages/admin/AdminPayments';
+import AdminDomain from './pages/admin/AdminDomain';
 import AdminMyTaxData from './pages/admin/AdminMyTaxData';
 // 🇸🇪 SE-ONLY LAUNCH: AdminTranslations hidden (single-language). Re-enable with its route below.
 // import AdminTranslations from './pages/admin/AdminTranslations';
@@ -98,7 +99,7 @@ import ProductCollectionPage from './pages/shop/ProductCollectionPage';
 import TagPage from './pages/shop/TagPage';
 import AllProductsPage from './pages/shop/AllProductsPage';
 import DynamicRouteHandler from './components/shop/DynamicRouteHandler';
-import { DEFAULT_SHOP_ID } from './config/tenancy';
+import { DEFAULT_SHOP_ID, isCustomDomainContext } from './config/tenancy';
 
 // Legal & Compliance Pages (now handled by CMS)
 
@@ -179,8 +180,75 @@ function LandingGate() {
 // the platform LP, where the shop context would be lost).
 function ShopHomeRedirect() {
   const shopId = useShopId();
-  return <Navigate to={`/${shopId}`} replace />;
+  // On a custom domain the shop lives at the root (no /{shopId} prefix), so its
+  // home is '/'; on a platform host it's /{shopId}.
+  return <Navigate to={isCustomDomainContext() ? '/' : `/${shopId}`} replace />;
 }
+
+// Per-shop storefront routes, parameterised by the path base so ONE declaration
+// serves both surfaces:
+//   • Platform host  → base = '/:shopId'  (path-prefix grammar: /{shopId}/cart)
+//   • Custom domain  → base = ''          (shop at the root: /cart), shopId comes
+//     from the edge-injected window.__SHOP_ID__ (ShopGate/useShopId resolve it).
+// Returns a fragment of <Route>s; spread into a <Routes> parent.
+const shopRoutes = (base) => (
+  <>
+    {/* Per-shop storefront. ShopGate validates the shop (redirects legacy /se &
+        unknown shops, shows "unavailable" for disabled shops) before rendering.
+        On a custom domain base='' so this is the bare-root storefront. */}
+    <Route path={`${base}/`} element={<ShopGate><PublicStorefront /></ShopGate>} />
+    <Route path={`${base}/product/:slug`} element={<ShopGate><PublicProductPage /></ShopGate>} />
+    <Route path={`${base}/cart`} element={<ShopGate><ShoppingCart /></ShopGate>} />
+    <Route path={`${base}/checkout`} element={<ShopGate><Checkout /></ShopGate>} />
+    <Route path={`${base}/order-return`} element={<ShopGate><OrderReturn /></ShopGate>} />
+    <Route path={`${base}/order-confirmation/:orderId`} element={<ShopGate><OrderConfirmation /></ShopGate>} />
+    <Route path={`${base}/account`} element={<ShopGate><CustomerAccount /></ShopGate>} />
+    {/* Ångerfunktionen (DAL 2 kap. 10 a §) — public, guest-capable, footer-linked. */}
+    <Route path={`${base}/angra`} element={<ShopGate><WithdrawalPage /></ShopGate>} />
+    {/* Abandoned-checkout recovery ("Övergiven kassa"): guest pages from the
+        reminder email. NO AddonGate — links must work even if disabled later.
+        Declared BEFORE the /*  CMS catch-all. */}
+    <Route path={`${base}/aterta/:token`} element={<ShopGate><CheckoutRecoveryPage /></ShopGate>} />
+    <Route path={`${base}/avregistrera/:token`} element={<ShopGate><CheckoutUnsubscribePage /></ShopGate>} />
+    {/* Native product reviews ("Recensioner"): public pages from the review
+        email. NO AddonGate — link must resolve even if disabled later. */}
+    <Route path={`${base}/recensera/:token`} element={<ShopGate><ReviewSubmitPage /></ShopGate>} />
+    <Route path={`${base}/avregistrera-recensioner/:token`} element={<ShopGate><ReviewUnsubscribePage /></ShopGate>} />
+    <Route path={`${base}/affiliate-registration`} element={<ShopGate><AddonGate feature="affiliate" redirectTo="shop-home"><AffiliateRegistration /></AddonGate></ShopGate>} />
+    <Route path={`${base}/affiliate-portal`} element={<ShopGate><AddonGate feature="affiliate" redirectTo="shop-home"><AffiliatePortal /></AddonGate></ShopGate>} />
+    {/* B2B Wholesale add-on: per-shop wholesale self-registration. Gated on
+        features.b2b; a non-B2B shop bounces to its home. Declared BEFORE the
+        /* CMS catch-all so it isn't swallowed. */}
+    <Route path={`${base}/b2b/register`} element={<ShopGate><AddonGate feature="b2b" redirectTo="shop-home"><B2BRegister /></AddonGate></ShopGate>} />
+    {/* B2B portal (browse-only in this phase). WALLED GARDEN: redirectTo="/login"
+        so a shop losing the b2b add-on mid-session lands on login, never the
+        consumer storefront. (The PUBLIC register page above keeps shop-home.) */}
+    <Route path={`${base}/b2b`} element={<ShopGate><AddonGate feature="b2b" redirectTo="/login"><B2BCustomerProvider><B2BPortalLayout><B2BDashboard /></B2BPortalLayout></B2BCustomerProvider></AddonGate></ShopGate>} />
+    <Route path={`${base}/b2b/products`} element={<ShopGate><AddonGate feature="b2b" redirectTo="/login"><B2BCustomerProvider><B2BPortalLayout><B2BCatalog /></B2BPortalLayout></B2BCustomerProvider></AddonGate></ShopGate>} />
+    <Route path={`${base}/b2b/orders`} element={<ShopGate><AddonGate feature="b2b" redirectTo="/login"><B2BCustomerProvider><B2BPortalLayout><B2BOrders /></B2BPortalLayout></B2BCustomerProvider></AddonGate></ShopGate>} />
+    <Route path={`${base}/b2b/orders/:orderId`} element={<ShopGate><AddonGate feature="b2b" redirectTo="/login"><B2BCustomerProvider><B2BPortalLayout><B2BOrderDetail /></B2BPortalLayout></B2BCustomerProvider></AddonGate></ShopGate>} />
+    <Route path={`${base}/b2b/profile`} element={<ShopGate><AddonGate feature="b2b" redirectTo="/login"><B2BCustomerProvider><B2BPortalLayout><B2BProfile /></B2BPortalLayout></B2BCustomerProvider></AddonGate></ShopGate>} />
+
+    {/* Category browse (primary taxonomy). Specific path — before the CMS catch-all. */}
+    <Route path={`${base}/kategori/:category`} element={<ShopGate><CollectionPage /></ShopGate>} />
+    {/* Collection browse (curated groups). Specific path — before the CMS catch-all. */}
+    <Route path={`${base}/samling/:handle`} element={<ShopGate><ProductCollectionPage /></ShopGate>} />
+    {/* Tag browse. Specific path — before the CMS catch-all. */}
+    <Route path={`${base}/tagg/:tag`} element={<ShopGate><TagPage /></ShopGate>} />
+    {/* Full-catalog browse (Shopify's /collections/all). */}
+    <Route path={`${base}/produkter`} element={<ShopGate><AllProductsPage /></ShopGate>} />
+
+    {/* Per-shop CMS pages: {base}/{slug} — DynamicRouteHandler reads the slug.
+        Falls back to the shop home. */}
+    <Route path={`${base}/*`} element={
+      <ShopGate>
+        <DynamicRouteHandler>
+          <ShopHomeRedirect />
+        </DynamicRouteHandler>
+      </ShopGate>
+    } />
+  </>
+);
 
 function App() {
   // 🚂 WAGON SYSTEM: State for wagon routes
@@ -325,11 +393,20 @@ function App() {
             // Bare / redirects to the default shop. Swedish-only (i18n deferred);
             // legacy /se/... links are redirected by LegacyCountryRedirect.
             <>
-              {/* Bare root → the platform Landing Page. A naked URL (no
-                  /{shopId}) must NEVER render a storefront — storefronts live
-                  ONLY at /{shopId}. Do NOT auto-redirect to DEFAULT_SHOP_ID
-                  (that leaked the b8shield store at the bare root). */}
-              <Route path="/" element={<LandingPage />} />
+              {/* CUSTOM DOMAIN (window.__SHOP_ID__ injected at the edge): the
+                  shop lives at the ROOT, so mount the storefront routes at base
+                  '' — /cart, /product/:slug — and skip the bare-root LandingPage
+                  below. On a platform host this branch is absent and the root is
+                  the platform LP. */}
+              {isCustomDomainContext() ? (
+                shopRoutes('')
+              ) : (
+                /* Bare root → the platform Landing Page. A naked URL (no
+                   /{shopId}) must NEVER render a storefront — storefronts live
+                   ONLY at /{shopId}. Do NOT auto-redirect to DEFAULT_SHOP_ID
+                   (that leaked the b8shield store at the bare root). */
+                <Route path="/" element={<LandingPage />} />
+              )}
 
               {/* Credential pages — shop-global, no shop prefix */}
               <Route path="/login" element={<CustomerLogin />} />
@@ -340,81 +417,16 @@ function App() {
               <Route path="/affiliate-login" element={<AffiliateLogin />} />
               <Route path="/__/auth/action" element={<EmailVerificationHandler />} />
 
-              {/* Per-shop storefront (shopId = first path segment). ShopGate
-                  validates the shop (redirects legacy /se & unknown shops,
-                  shows "unavailable" for disabled shops) before rendering. */}
-              <Route path="/:shopId" element={<ShopGate><PublicStorefront /></ShopGate>} />
-              <Route path="/:shopId/product/:slug" element={<ShopGate><PublicProductPage /></ShopGate>} />
-              <Route path="/:shopId/cart" element={<ShopGate><ShoppingCart /></ShopGate>} />
-              <Route path="/:shopId/checkout" element={<ShopGate><Checkout /></ShopGate>} />
-              <Route path="/:shopId/order-return" element={<ShopGate><OrderReturn /></ShopGate>} />
-              <Route path="/:shopId/order-confirmation/:orderId" element={<ShopGate><OrderConfirmation /></ShopGate>} />
-              <Route path="/:shopId/account" element={<ShopGate><CustomerAccount /></ShopGate>} />
-              {/* Ångerfunktionen (DAL 2 kap. 10 a §) — public, guest-capable,
-                  linked from the footer on every page (continuous availability). */}
-              <Route path="/:shopId/angra" element={<ShopGate><WithdrawalPage /></ShopGate>} />
-              {/* Abandoned-checkout recovery ("Övergiven kassa" add-on): guest
-                  pages reached from the reminder email. NO AddonGate — the
-                  recovery + unsubscribe links must work even if the add-on is
-                  later disabled. Declared BEFORE the /:shopId/* CMS catch-all. */}
-              <Route path="/:shopId/aterta/:token" element={<ShopGate><CheckoutRecoveryPage /></ShopGate>} />
-              <Route path="/:shopId/avregistrera/:token" element={<ShopGate><CheckoutUnsubscribePage /></ShopGate>} />
-              {/* Native product reviews ("Recensioner" add-on): the public pages
-                  reached from the review-request email. NO AddonGate — the link
-                  must resolve even if the add-on was later disabled. Declared
-                  BEFORE the /:shopId/* CMS catch-all. */}
-              <Route path="/:shopId/recensera/:token" element={<ShopGate><ReviewSubmitPage /></ShopGate>} />
-              <Route path="/:shopId/avregistrera-recensioner/:token" element={<ShopGate><ReviewUnsubscribePage /></ShopGate>} />
-              <Route path="/:shopId/affiliate-registration" element={<ShopGate><AddonGate feature="affiliate" redirectTo="shop-home"><AffiliateRegistration /></AddonGate></ShopGate>} />
-              <Route path="/:shopId/affiliate-portal" element={<ShopGate><AddonGate feature="affiliate" redirectTo="shop-home"><AffiliatePortal /></AddonGate></ShopGate>} />
-              {/* B2B Wholesale add-on: per-shop wholesale self-registration.
-                  Gated on features.b2b; a non-B2B shop bounces to its home.
-                  Declared BEFORE the /:shopId/* CMS catch-all so it isn't
-                  swallowed. Portal pages (catalog/orders) land in Phase 3. */}
-              <Route path="/:shopId/b2b/register" element={<ShopGate><AddonGate feature="b2b" redirectTo="shop-home"><B2BRegister /></AddonGate></ShopGate>} />
-              {/* B2B portal (browse-only in this phase; ordering = Phase 4).
-                  Each page: ShopGate → AddonGate(b2b) → B2BCustomerProvider →
-                  B2BPortalLayout (resolves profile + gates active). Declared
-                  BEFORE the /:shopId/* CMS catch-all.
-                  WALLED GARDEN: redirectTo="/login" (NOT shop-home) so that if a
-                  shop loses the b2b add-on mid-session, the customer lands on
-                  login, never the consumer storefront. (The PUBLIC register page
-                  below keeps shop-home — a prospect bouncing to the shop is fine.) */}
-              <Route path="/:shopId/b2b" element={<ShopGate><AddonGate feature="b2b" redirectTo="/login"><B2BCustomerProvider><B2BPortalLayout><B2BDashboard /></B2BPortalLayout></B2BCustomerProvider></AddonGate></ShopGate>} />
-              <Route path="/:shopId/b2b/products" element={<ShopGate><AddonGate feature="b2b" redirectTo="/login"><B2BCustomerProvider><B2BPortalLayout><B2BCatalog /></B2BPortalLayout></B2BCustomerProvider></AddonGate></ShopGate>} />
-              <Route path="/:shopId/b2b/orders" element={<ShopGate><AddonGate feature="b2b" redirectTo="/login"><B2BCustomerProvider><B2BPortalLayout><B2BOrders /></B2BPortalLayout></B2BCustomerProvider></AddonGate></ShopGate>} />
-              <Route path="/:shopId/b2b/orders/:orderId" element={<ShopGate><AddonGate feature="b2b" redirectTo="/login"><B2BCustomerProvider><B2BPortalLayout><B2BOrderDetail /></B2BPortalLayout></B2BCustomerProvider></AddonGate></ShopGate>} />
-              <Route path="/:shopId/b2b/profile" element={<ShopGate><AddonGate feature="b2b" redirectTo="/login"><B2BCustomerProvider><B2BPortalLayout><B2BProfile /></B2BPortalLayout></B2BCustomerProvider></AddonGate></ShopGate>} />
-
-              {/* Category browse pages (the primary taxonomy). Specific path so
-                  it matches before the CMS catch-all below. */}
-              <Route path="/:shopId/kategori/:category" element={<ShopGate><CollectionPage /></ShopGate>} />
-
-              {/* Collection browse pages (curated groups: manual pick or smart
-                  tag-rule). Specific path — matches before the CMS catch-all. */}
-              <Route path="/:shopId/samling/:handle" element={<ShopGate><ProductCollectionPage /></ShopGate>} />
-
-              {/* Tag browse pages (products with a given tag). Specific path —
-                  matches before the CMS catch-all. */}
-              <Route path="/:shopId/tagg/:tag" element={<ShopGate><TagPage /></ShopGate>} />
-
-              {/* Full-catalog browse page (Shopify's /collections/all). Where
-                  "Visa alla produkter" lands when the frontpage is curated. */}
-              <Route path="/:shopId/produkter" element={<ShopGate><AllProductsPage /></ShopGate>} />
-
-              {/* Per-shop CMS pages: /{shopId}/{slug} — DynamicRouteHandler reads
-                  the slug after the shopId. Falls back to the shop home. */}
-              <Route path="/:shopId/*" element={
-                <ShopGate>
-                  <DynamicRouteHandler>
-                    <ShopHomeRedirect />
-                  </DynamicRouteHandler>
-                </ShopGate>
-              } />
+              {/* Per-shop storefront (shopId = first path segment). Only mounted
+                  on a platform host — a custom domain serves these at the root
+                  above via shopRoutes(''). */}
+              {!isCustomDomainContext() && shopRoutes('/:shopId')}
 
               {/* Catch-all → the Landing Page, NOT the default storefront. An
                   unmatched naked path must not dump the visitor into b8shield's
-                  store. (Credential pages + /{shopId} routes are matched above.) */}
+                  store. (Credential pages + /{shopId} routes are matched above.)
+                  On a custom domain the {base}/* CMS catch-all in shopRoutes('')
+                  already claims unmatched paths, so this stays LP-safe. */}
               <Route path="*" element={<LandingPage />} />
             </>
           ) : (
@@ -638,6 +650,12 @@ function App() {
               <Route path="/admin/payments" element={
                 <AdminRoute>
                   <AdminPayments />
+                </AdminRoute>
+              } />
+
+              <Route path="/admin/domain" element={
+                <AdminRoute>
+                  <AdminDomain />
                 </AdminRoute>
               } />
 

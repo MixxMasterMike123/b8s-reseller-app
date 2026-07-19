@@ -17,22 +17,17 @@ class WagonRegistry {
    * Skip discovery for B2C mode since wagons are primarily B2B/admin tools
    */
   shouldDiscoverWagons() {
-    // Check if we're on B2C shop domain
-    const isB2CShop = typeof window !== 'undefined' && 
-                     window.location.hostname === 'shop.b8shield.com';
-    
-    // Check URL path for admin routes
-    const isAdminRoute = typeof window !== 'undefined' && 
+    // Wagons are admin tooling (mounted only in admin mode — see App.jsx route
+    // filter). Discovery is only worthwhile under /admin; skip it everywhere
+    // else (storefront on any host, incl. custom domains) as a perf win.
+    const isAdminRoute = typeof window !== 'undefined' &&
                         window.location.pathname.startsWith('/admin');
-    
-    // Check if we're in an environment where wagons would be used
-    const needsWagons = !isB2CShop || isAdminRoute;
-    
-    if (!needsWagons) {
-      console.log('⚡ B8Shield Train: Skipping wagon discovery for B2C mode (performance optimization)');
+
+    if (!isAdminRoute) {
+      console.log('⚡ Train: Skipping wagon discovery outside /admin (performance optimization)');
       return false;
     }
-    
+
     return true;
   }
 
@@ -44,9 +39,11 @@ class WagonRegistry {
   async discoverWagons() {
     if (this.initialized) return;
     
-    // Check if discovery is needed (performance optimization)
+    // Check if discovery is needed (performance optimization). Do NOT mark
+    // initialized on skip: a first load on a non-/admin path (e.g. the admin
+    // host root) must still be able to discover after a client-side nav into
+    // /admin. App.jsx re-runs discovery when appMode settles.
     if (!this.shouldDiscoverWagons()) {
-      this.initialized = true; // Mark as initialized to prevent future attempts
       return;
     }
     

@@ -27,6 +27,7 @@ export { scrapeWebsiteMeta as scrapeWebsiteMetaV2 };
 export { getPrintQueue, getPrintJob, getPrintQueueExport, createPrintShopUser, } from './print/functions';
 export { setPrintJobStatus } from './print/setPrintJobStatus';
 export { submitLead } from './leads/submitLead';
+export { requestCustomDomain, checkCustomDomainStatus, removeCustomDomain } from './domains/callables';
 export { sweepAbandonedCheckouts } from './checkout-recovery/sweep';
 export { resolveCheckoutRecovery, unsubscribeCheckout } from './checkout-recovery/callables';
 export { onOrderReviewQualify } from './product-reviews/writeReviewRequest';

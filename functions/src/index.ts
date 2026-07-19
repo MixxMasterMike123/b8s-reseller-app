@@ -219,6 +219,14 @@ export { setPrintJobStatus } from './print/setPrintJobStatus';
 // writes a platform-level `leads` doc + best-effort admin notification email.
 export { submitLead } from './leads/submitLead';
 
+// Custom domains (Cloudflare for SaaS) — connect a shop's own domain to its
+// storefront. Token-ready: callables fail gracefully until CF secrets are set.
+export {
+  requestCustomDomain,
+  checkCustomDomainStatus,
+  removeCustomDomain
+} from './domains/callables';
+
 // Abandoned-checkout recovery ("Övergiven kassa" add-on): a scheduled sweep that
 // reminds buyers who created a PaymentIntent but never completed the order, plus
 // two public callables the storefront recovery/unsubscribe pages call.

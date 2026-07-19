@@ -21,7 +21,19 @@ exports.getGeoData = (0, https_1.onRequest)({
     try {
         // Only serve geo data for B2C shop domain
         const origin = req.headers.origin || req.headers.referer;
-        const isShopDomain = !!origin && app_urls_1.appUrls.CORS_ORIGINS.some((allowed) => origin.startsWith(allowed));
+        // origin may be a bare Origin OR a full referer URL (with path); reduce a
+        // referer to its origin before matching. Honours static list + custom-domain
+        // regex via appUrls.isAllowedOrigin (RegExp elements can't be .startsWith'd).
+        let originHost;
+        if (origin) {
+            try {
+                originHost = new URL(origin).origin;
+            }
+            catch {
+                originHost = origin;
+            }
+        }
+        const isShopDomain = app_urls_1.appUrls.isAllowedOrigin(originHost);
         if (!isShopDomain) {
             console.log(`Geo data request from non-shop domain: ${origin}`);
             res.status(403).json({

@@ -2,8 +2,8 @@
  * Geo + Language + Currency Detection System for B2C Shop
  * Handles intelligent detection based on geo-targeting, user preferences, and overrides
  * 
- * ONLY ACTIVE FOR: shop.b8shield.com
- * (B2B portal partner.b8shield.com always uses sv-SE + SEK)
+ * 🇸🇪 SE-ONLY: the storefront is Swedish-only (sv-SE + SEK) on every host, so
+ * this always resolves to the Swedish default; the geo machinery is dormant.
  */
 
 import { detectCurrency, getCurrencySymbol, getCurrencyName } from './currencyDetection.js';
@@ -144,29 +144,16 @@ export const detectLanguageAndCurrency = (options = {}) => {
       respectUserPreferences = true
     } = options;
     
-    // Check if we're on the B2C shop domain
-    const isShopDomain = typeof window !== 'undefined' && 
-                        window.location.hostname === 'shop.b8shield.com';
-    
-    console.log('🔍 Detection Debug:', {
-      isShopDomain,
-      hostname: typeof window !== 'undefined' ? window.location.hostname : 'server',
-      userPreferredLang,
-      manualLanguage,
-      manualCurrency
-    });
-    
-    // If not on shop domain, always return Swedish (B2B portal)
-    if (!isShopDomain) {
-      console.log('🏠 B2B Portal: Using sv-SE + SEK');
-      return {
-        language: 'sv-SE',
-        currency: 'SEK',
-        source: 'b2b-portal',
-        countryDetected: 'SE',
-        market: 'primary'
-      };
-    }
+    // 🇸🇪 SE-ONLY: the storefront is Swedish-only (sv-SE / SEK) on every host,
+    // including custom domains. Return the static default rather than sniffing
+    // the hostname; the geo/language machinery below is dormant under SE-only.
+    return {
+      language: 'sv-SE',
+      currency: 'SEK',
+      source: 'se-only',
+      countryDetected: 'SE',
+      market: 'primary'
+    };
     
     console.log('🛒 B2C Shop: Detecting language and currency...');
     

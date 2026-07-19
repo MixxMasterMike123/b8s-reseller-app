@@ -3,8 +3,8 @@
  * Detects user's preferred currency based on CloudFlare geo-targeting, 
  * language preferences, and fallback logic
  * 
- * ONLY ACTIVE FOR: shop.b8shield.com
- * (B2B portal partner.b8shield.com always uses SEK)
+ * 🇸🇪 SE-ONLY: the storefront is Swedish-only (SEK) on every host, so this
+ * always resolves to SEK; the geo/language machinery is dormant.
  */
 
 // Country to currency mapping
@@ -103,18 +103,10 @@ export const getCloudFlareCountry = () => {
  */
 export const detectCurrency = (userLanguage = null, manualOverride = null) => {
   try {
-    // Check if we're on the B2C shop domain
-    const isShopDomain = typeof window !== 'undefined' && 
-                        window.location.hostname === 'shop.b8shield.com';
-    
-    // If not on shop domain, always return SEK (B2B portal)
-    if (!isShopDomain) {
-      console.log('🏠 Currency: B2B portal - using SEK');
-      return 'SEK';
-    }
-    
-    console.log('🛒 Currency: B2C shop - detecting currency...');
-    
+    // 🇸🇪 SE-ONLY: the storefront is Swedish-only (SEK). Currency is always SEK
+    // regardless of host or geo; the manual-override / geo branches below are
+    // retained but only ever return SEK given the SE-only country config.
+
     // 1. Manual override takes highest priority
     if (manualOverride && isValidCurrency(manualOverride)) {
       console.log('💰 Currency: Manual override ->', manualOverride);

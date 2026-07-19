@@ -27,12 +27,26 @@ export const appUrls = {
   LOGO_URL: process.env.EMAIL_LOGO_URL || '',
 
   // CORS allowed origins (shop + portal + project hosting + local dev,
-  // plus any comma-separated extras from CORS_EXTRA_ORIGINS)
-  get CORS_ORIGINS(): string[] {
+  // plus any comma-separated extras from CORS_EXTRA_ORIGINS).
+  //
+  // CUSTOM DOMAINS (Cloudflare-for-SaaS slice): a storefront served on a shop's
+  // OWN domain still calls the SAME Firebase callables, so the browser sends that
+  // domain as the Origin header and it must be allow-listed or the call is CORS-
+  // rejected. The set of live custom domains is DYNAMIC (Firestore domainMappings)
+  // and cannot be enumerated at cold-start, while `cors` is resolved once per
+  // instance. firebase-functions v2 `cors` accepts `RegExp | Array<string|RegExp>`,
+  // so the seam is a REGEX, not a per-domain list: set CORS_CUSTOM_DOMAIN_REGEX to
+  // a pattern matching your live custom-domain origins (e.g. the tenant apexes you
+  // sell). Callables spread CORS_ORIGINS which now includes that RegExp when set.
+  // Absent the env, behaviour is unchanged (no custom-domain origins allowed).
+  get CORS_ORIGINS(): Array<string | RegExp> {
     const extras = (process.env.CORS_EXTRA_ORIGINS || '')
       .split(',')
       .map((s) => s.trim())
       .filter(Boolean);
+    const customRe = process.env.CORS_CUSTOM_DOMAIN_REGEX
+      ? [new RegExp(process.env.CORS_CUSTOM_DOMAIN_REGEX)]
+      : [];
     return [
       this.B2C_SHOP,
       this.B2B_PORTAL,
@@ -49,8 +63,26 @@ export const appUrls = {
       'https://print-meteorpr.web.app',
       'http://localhost:5173', // Development
       'http://localhost:3000', // Development
-      ...extras
+      ...extras,
+      ...customRe // custom-domain origins (RegExp), empty unless env is set
     ];
+  },
+
+  // Predicate form for MANUAL CORS handlers (onRequest endpoints that echo the
+  // Origin header themselves — geo/functions.ts, protection/cors-handler.ts).
+  // Those can't hand a RegExp to a string .includes()/.startsWith(), so they ask
+  // here instead. Honours the same static list + custom-domain regex as
+  // CORS_ORIGINS, so custom domains work uniformly across callable and onRequest.
+  isAllowedOrigin(origin: string | undefined | null): boolean {
+    if (!origin) return false;
+    for (const o of this.CORS_ORIGINS) {
+      if (typeof o === 'string') {
+        if (origin === o) return true;
+      } else if (o.test(origin)) {
+        return true;
+      }
+    }
+    return false;
   },
 
   // User Agent for outbound API calls

@@ -1,0 +1,30 @@
+# ChopShop custom-domain edge Worker.
+#
+# Proxies customer hostnames (e.g. butik.giffarna.se) to the shared storefront on
+# Firebase Hosting (shop-meteorpr.web.app) and injects window.__SHOP_ID__ into the
+# HTML so the single-tenant-looking storefront knows which shop it's serving.
+#
+# The hostname → shopId map lives in Workers KV (namespace bound as DOMAIN_MAP),
+# written by the domains Cloud Functions callables. See README.md for provisioning.
+#
+# Placeholders below (____) must be filled once the CF account/zone/KV exist.
+
+name = "chopshop-domains"
+main = "src/index.js"
+compatibility_date = "2024-11-01"
+
+# KV namespace that holds hostname → shopId entries. Create it with:
+#   wrangler kv namespace create DOMAIN_MAP
+# then paste the returned id here. The Cloud Functions write to this same
+# namespace via the CF KV REST API (CHOPSHOP_CF_KV_NAMESPACE_ID must equal this id).
+[[kv_namespaces]]
+binding = "DOMAIN_MAP"
+id = "____KV_NAMESPACE_ID____"
+
+[vars]
+# Origin the Worker proxies to (the shared Firebase Hosting storefront).
+ORIGIN_HOST = "shop-meteorpr.web.app"
+
+# The Worker runs on the CF-for-SaaS custom hostnames routed to this zone. Routes
+# are attached via the dashboard / SSL-for-SaaS config, not a wrangler route glob,
+# because the hostnames are dynamic (one per tenant). See README.md.

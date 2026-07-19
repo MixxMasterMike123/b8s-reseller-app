@@ -289,6 +289,22 @@ service cloud.firestore {
     }
 
     // ============================================================
+    // domainMappings — GLOBAL hostname → shopId index for custom domains
+    // (doc id == the customer's hostname, e.g. "butik.giffarna.se"). This is
+    // PUBLIC, non-sensitive data: a hostname resolving to a shopId is exactly
+    // what the edge Worker injects as window.__SHOP_ID__ on every request. So a
+    // single get() is public. It is NOT listable (no enumerating every tenant's
+    // domains). All writes are SERVER-ONLY (Admin SDK bypasses rules) — the
+    // domains callables own the CF/KV/Auth side-effects and the uniqueness
+    // transaction; a client write would corrupt that index.
+    // ============================================================
+    match /domainMappings/{hostname} {
+      allow get: if true;
+      allow list: if false;
+      allow write: if false;
+    }
+
+    // ============================================================
     // dac7Sellers — DAC7 seller due-diligence data (sensitive PII: tax id /
     // personnummer, DOB, verified legal name + address, country of residence).
     // ⚠️ DAC7 is the PLATFORM operator's obligation (reporting platform operator,

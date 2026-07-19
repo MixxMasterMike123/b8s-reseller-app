@@ -2,9 +2,7 @@
 // Helper functions for campaign management, banners, and affiliate targeting
 
 import { CampaignWagonManifest } from '../CampaignWagonManifest.js';
-
-// **CRITICAL NOTE: All URLs must use /:currentLang/ structure for affiliate referrals**
-// Example: shop.b8shield.com/:currentLang/?ref=AFFILIATE_CODE&campaign=CAMPAIGN_CODE
+import { generateAffiliateLink } from '../../../utils/productUrls.js';
 
 // Social Media Platform Banner Specifications
 export const BANNER_PLATFORMS = CampaignWagonManifest.config.banners.platforms;
@@ -88,26 +86,21 @@ export const CAMPAIGN_STATUS = {
 };
 
 /**
- * Generate campaign-specific affiliate URL with language awareness
- * CRITICAL: Must use /:currentLang/ structure for proper routing
- * 
+ * Generate a campaign-specific affiliate URL for the CURRENT shop.
+ *
+ * SE-ONLY: the storefront is Swedish-only (no /:lang/ segment). The link is
+ * built from the live shop context via generateAffiliateLink (shop-prefixed on
+ * a platform host, bare-root on a custom domain — single source in productUrls),
+ * with the campaign code appended.
+ *
  * @param {string} affiliateCode - Affiliate's unique code
  * @param {string} campaignCode - Campaign's unique code
- * @param {string} preferredLang - Affiliate's preferred language (sv-SE, en-GB, en-US)
+ * @param {string} [preferredLang] - Retained for signature compat; unused (SE-only)
  * @returns {string} Complete campaign URL
  */
 export const generateCampaignURL = (affiliateCode, campaignCode, preferredLang = 'sv-SE') => {
-  // Map language codes to URL segments
-  const langSegments = {
-    'sv-SE': 'se',
-    'en-GB': 'gb', 
-    'en-US': 'us'
-  };
-  
-  const segment = langSegments[preferredLang] || 'se';
-  const baseURL = 'https://shop.b8shield.com';
-  
-  return `${baseURL}/${segment}/?ref=${affiliateCode}&campaign=${campaignCode}`;
+  const base = generateAffiliateLink(affiliateCode, preferredLang);
+  return `${base}&campaign=${campaignCode}`;
 };
 
 /**

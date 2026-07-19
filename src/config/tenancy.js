@@ -6,11 +6,18 @@
 // and the path-grammar parsing, so there is exactly one place that knows how a
 // URL maps to a shop — no duplicated parsing that can drift.
 //
-// Phase 0b (current): PATH-PREFIX grammar. Every storefront URL carries the
-// shopId as the first path segment: `/{shopId}`, `/{shopId}/product/:slug`,
-// `/{shopId}/cart`, etc. The bare `/` redirects to `/{DEFAULT_SHOP_ID}`.
-// resolveShopId derives the shop from segment[0]. This file is the SINGLE
+// Phase 0b: PATH-PREFIX grammar. Every storefront URL carries the shopId as the
+// first path segment: `/{shopId}`, `/{shopId}/product/:slug`, `/{shopId}/cart`,
+// etc. resolveShopId derives the shop from segment[0]. This file is the SINGLE
 // source of truth for the path grammar — no duplicated parsing elsewhere.
+//
+// Slice A (CUSTOM DOMAINS): a shop can also live at its own bare domain
+// (e.g. shop.melodiemc.com), fronted by a Cloudflare Worker that proxies to
+// Firebase Hosting and injects `window.__SHOP_ID__` into index.html at the
+// edge (KV-backed, keyed by hostname). On such a domain the shop lives at the
+// ROOT — there is NO /{shopId}/ path prefix — so the edge shopId wins over path
+// parsing and links must NOT manufacture a prefix. The SPA still sees the
+// customer hostname in location.hostname; the ONLY signal is __SHOP_ID__.
 
 // The internal id of the existing/first shop. This is a DATA key, never shown
 // to customers — the customer-facing brand is meteorpr / per-shop config.
@@ -41,12 +48,47 @@ export const NON_SHOP_FIRST_SEGMENTS = new Set([
   'affiliate-login', '__', 'account', 'admin', 'platform',
 ]);
 
+// A valid shopId slug: lowercase alphanumeric + hyphen (matches how shops are
+// registered). Used to sanitise the edge-injected __SHOP_ID__ so a malformed KV
+// value can never poison resolution.
+const SHOP_ID_SLUG = /^[a-z0-9-]+$/;
+
 /**
- * Resolve the current shopId from a URL pathname.
+ * The shopId injected by the custom-domain edge Worker (window.__SHOP_ID__), or
+ * null. Validated as a lowercase alphanumeric-hyphen slug — a malformed value is
+ * ignored (treated as absent) rather than trusted, so a bad KV entry degrades to
+ * the path-prefix grammar instead of resolving to a garbage tenant.
  *
- * Path-prefix grammar: segment[0] is the shopId (e.g. /sillmans/cart →
- * 'sillmans'). Falls back to DEFAULT_SHOP_ID for the bare root and for known
- * non-shop first segments (legacy country codes, credential routes).
+ * @returns {string|null}
+ */
+export const getEdgeShopId = () => {
+  if (typeof window === 'undefined') return null;
+  const injected = window.__SHOP_ID__;
+  if (typeof injected !== 'string') return null;
+  const slug = injected.toLowerCase();
+  return SHOP_ID_SLUG.test(slug) ? slug : null;
+};
+
+/**
+ * True on a custom-domain context — the shop is served at its own bare domain
+ * with the shopId injected at the edge (window.__SHOP_ID__), NOT carried in the
+ * path. Link-building keys off this: on a custom domain the shop lives at the
+ * root, so storefront links must OMIT the /{shopId}/ prefix.
+ *
+ * @returns {boolean}
+ */
+export const isCustomDomainContext = () => getEdgeShopId() !== null;
+
+/**
+ * Resolve the current shopId.
+ *
+ * Resolution order:
+ *   1. window.__SHOP_ID__ (custom-domain edge injection) — validated slug wins;
+ *      on a custom domain the shop is the domain, path prefix is irrelevant.
+ *   2. Path-prefix grammar: segment[0] is the shopId (e.g. /sillmans/cart →
+ *      'sillmans'), skipping known non-shop first segments (legacy country
+ *      codes, credential routes, admin/platform).
+ *   3. DEFAULT_SHOP_ID — the bare root and non-shop first segments.
  *
  * NOTE: this does NOT validate that the shopId exists — that's done at render
  * (ShopContext/StoreSettings) so an unknown/disabled shop can show an
@@ -56,6 +98,8 @@ export const NON_SHOP_FIRST_SEGMENTS = new Set([
  * @returns {string} the resolved shopId
  */
 export const resolveShopId = (pathname) => {
+  const edge = getEdgeShopId();
+  if (edge) return edge;
   const path = typeof pathname === 'string'
     ? pathname
     : (typeof window !== 'undefined' ? window.location.pathname : '/');
@@ -73,10 +117,15 @@ export const resolveShopId = (pathname) => {
  * so links resolve to the platform Landing Page instead. (Decided 2026-06-25:
  * a shopless context must never default into the b8shield store.)
  *
+ * CUSTOM-DOMAIN EXCEPTION: a custom domain (window.__SHOP_ID__ set) has a real
+ * shop even at a bare path (the shop lives at the root), so it is NEVER shopless
+ * — resolveShopId returns the edge shop, not a fallback.
+ *
  * @param {string} [pathname]
  * @returns {boolean}
  */
 export const isShoplessPath = (pathname) => {
+  if (isCustomDomainContext()) return false;
   const path = typeof pathname === 'string'
     ? pathname
     : (typeof window !== 'undefined' ? window.location.pathname : '/');

@@ -3,7 +3,7 @@ import { useParams, useLocation, Navigate } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
 import { doc, getDoc } from 'firebase/firestore';
 import { db } from '../../firebase/config';
-import { DEFAULT_SHOP_ID, COUNTRY_PREFIXES } from '../../config/tenancy';
+import { DEFAULT_SHOP_ID, COUNTRY_PREFIXES, getEdgeShopId } from '../../config/tenancy';
 import LandingPage from '../../pages/LandingPage';
 
 /**
@@ -25,8 +25,12 @@ import LandingPage from '../../pages/LandingPage';
  *     indexable (existing shops predate the field).
  */
 const ShopGate = ({ children }) => {
-  const { shopId } = useParams();
+  const params = useParams();
   const location = useLocation();
+  // Custom-domain storefront routes carry NO :shopId param (the shop is the
+  // domain); fall back to the edge-injected shopId so the same gate validates
+  // the tenant on both surfaces.
+  const shopId = params.shopId || getEdgeShopId();
   const [state, setState] = useState({ status: 'checking', shop: null });
 
   const isLegacyCountry = COUNTRY_PREFIXES.includes((shopId || '').toLowerCase());

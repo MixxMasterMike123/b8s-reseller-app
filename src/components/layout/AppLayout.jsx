@@ -34,7 +34,8 @@ import {
   TagIcon,
   StarIcon,
   RectangleStackIcon,
-  ListBulletIcon
+  ListBulletIcon,
+  GlobeAltIcon
 } from '@heroicons/react/24/outline';
 
 const AppLayout = ({ children }) => {
@@ -202,6 +203,12 @@ const AppLayout = ({ children }) => {
       path: '/admin/skatteuppgifter',
       icon: DocumentTextIcon,
       description: t('nav.admin_dac7_desc', 'Dina rapporterade uppgifter (DAC7)'),
+    },
+    {
+      name: t('nav.admin_domain', 'Domän'),
+      path: '/admin/domain',
+      icon: GlobeAltIcon,
+      description: t('nav.admin_domain_desc', 'Använd din egen domän'),
     },
     {
       name: t('nav.admin_settings', 'Inställningar'),

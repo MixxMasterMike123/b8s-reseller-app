@@ -1,11 +1,17 @@
 // Product URL utilities for clean, SEO-friendly URLs
 import { APP_URLS } from '../config/urls';
 import { STORE } from '../config/store';
-import { resolveShopId, isShoplessPath } from '../config/tenancy';
+import { resolveShopId, isShoplessPath, isCustomDomainContext } from '../config/tenancy';
 
-// Current shop prefix for storefront links, derived from the URL (path-prefix
-// multi-tenant grammar: /{shopId}/...). Single source = config/tenancy.
+// Current shop prefix for storefront links. SINGLE place that knows whether a
+// link carries the /{shopId}/ prefix — every builder below goes through this so
+// the custom-domain branch is decided once, not scattered as hostname checks.
+//
+// - Custom domain (window.__SHOP_ID__ set): the shop IS the domain, served at
+//   the root, so the prefix is EMPTY — links stay bare (/product/:slug, /cart).
+// - Platform host (path-prefix grammar): the prefix is /{shopId} as before.
 const currentShopPrefix = () => {
+  if (isCustomDomainContext()) return '';
   const pathname = typeof window !== 'undefined' ? window.location.pathname : '/';
   return `/${resolveShopId(pathname)}`;
 };
@@ -139,7 +145,9 @@ export const getCountryAwareUrl = (path) => {
   }
   const cleanPath = path.startsWith('/') ? path.slice(1) : path;
   const prefix = currentShopPrefix();
-  if (!cleanPath || cleanPath === '') return prefix;
+  // On a custom domain prefix is '' (shop at root): home is '/', not an empty
+  // string, and inner paths are already absolute (`/${cleanPath}`).
+  if (!cleanPath || cleanPath === '') return prefix || '/';
   return `${prefix}/${cleanPath}`;
 };
 
@@ -171,7 +179,9 @@ export const getTagUrl = (tag) => `${currentShopPrefix()}/tagg/${slugify(tag)}`;
 // - page         → /{shopId}/{slug}  (CMS page; shop-prefixed via getCountryAwareUrl)
 // - url          → the raw target (external / absolute), used as-is
 export const buildMenuHref = (item) => {
-  if (!item || !item.type) return currentShopPrefix();
+  // Home href: prefix on a platform host, '/' on a custom domain (empty prefix).
+  const homeHref = () => currentShopPrefix() || '/';
+  if (!item || !item.type) return homeHref();
   const target = item.target || '';
   switch (item.type) {
     case 'all-products': return getAllProductsUrl();
@@ -179,9 +189,9 @@ export const buildMenuHref = (item) => {
     case 'tag': return getTagUrl(target);
     case 'collection': return getCollectionUrl(target);
     case 'page': return getCountryAwareUrl(target);
-    case 'url': return target || currentShopPrefix();
+    case 'url': return target || homeHref();
     case 'home':
-    default: return getCountryAwareUrl('');
+    default: return homeHref();
   }
 };
 
